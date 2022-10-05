@@ -1,0 +1,130 @@
+---
+title: "Northern gannets Rouzic 2022"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+## 1- Importing data from Movebank
+
+The dataset is stored on the online database Movebank. It can be downloaded directly from the web as long as the user has an account. Each time the dataset is downloaded, the last locations are added, as some of the devices are still emitting.
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+library(move)
+library(here)
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(sf)
+library(rgdal)
+library(fields)
+
+# loginStored <- movebankLogin(username="AurorePonchon", password="XXX")
+# gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
+# metadata<-getMovebankStudy(study=gannets,login=loginStored)
+# getMovebankSensorsAttributes(study=gannets,login=loginStored)
+# reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
+# locations <- getMovebankData(study=gannets, login=loginStored,
+#                              removeDuplicatedTimestamps=TRUE)
+# save(locations,file=here("data","raw","gannets_rouzic_raw_2022.Rdata"))
+# 
+# leroySPDF <- as(locations,"SpatialPointsDataFrame")
+# writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+
+load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
+```
+
+## 2- Processing location data
+
+Movebank datasets contain a lot of information that are not all necessary for the analysis. Then, we calculate distances and time between locations and add a few variables that will be calculated after interpolation.
+
+```{r}
+#| echo: false
+#| include: true
+
+colo_coord<-data.frame(long=-3.436752, lat=48.899868)
+
+locs<- locations@data %>% 
+    select(tag_id,timestamp,location_long,location_lat,
+           barometric_height, ground_speed,heading) %>% 
+    rename(id=tag_id,
+           datetime=timestamp,
+           long=location_long,
+           lat=location_lat,
+           alt=barometric_height,
+           speed=ground_speed)  %>% 
+    arrange(id,datetime) %>% 
+    mutate(id=as.factor(id))
+
+
+ids<-unique(levels(locs$id))
+
+#create new object with distance and time differences
+locs.dist<-NULL
+
+#loop through each individual 
+#for (i in 1:length(ids)){
+    ind.loc<-locs %>% 
+        filter(id==ids[i]) %>% 
+        mutate(distmax=0,
+               distadj=0,
+               totalpath=0,
+               difftime=0,
+               travelNb=0,
+               onlandNb=0)
+    
+  #loop through each line to calculate distance and time difference with previous location
+for (l in 2:nrow(ind.loc)){
+    
+ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   ind.loc[l-1,c("long","lat")], miles = F)
+ind.loc[l,"difftime"]<-difftime(ind.loc[l,"datetime"],
+                                   ind.loc[l-1,"datetime"], units="mins")
+ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   colo_coord[c(1,2)], miles = F)
+}
+ 
+    
+    
+       
+    locs.dist<-rbind(locs.dist,ind.loc)    
+#}
+```
+
+## 3- Interpolation
+
+In order to determine an appropriate time interval, we investigate time difference between locations to identify potential gaps in the data and see when they occur.
+
+```{r}
+#| echo: false
+#| include: true
+
+hist.diff<-locs.dist %>% 
+    filter(difftime > 120) %>% 
+    ggplot() +
+    geom_histogram( aes(x=difftime/60),breaks=seq(0,1200,10)) 
+print(hist.diff)
+
+
+date.diff<-locs.dist %>% 
+    filter(difftime > 60) %>% 
+    ggplot() +
+    geom_point( aes(x=datetime,y=difftime/60,color=id))
+print(date.diff)
+
+    
+```
+
+After examination, 96% of data have a time interval of less than 15min so interpolation can be based on this time threshold.
+
+```{r}
+#| echo: false
+#| include: true
+
+
+
+```
