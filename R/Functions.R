@@ -29,7 +29,7 @@ define_trips<-function(data,dist.min){
                 ifelse(data$datetime[trip[length(trip)]] != data$datetime[nrow(data)],
                        rowtrip<-c(trip[1]-1,trip,trip[length(trip)]+1),
                        rowtrip<-c(trip[1]-1,trip))
-  #              if(length(rowtrip) >= row.min & sum(data$difftime[rowtrip]) > dur.min){
+  #              if(length(rowtrip) >= row.min & sum(data$difftimemin[rowtrip]) > dur.min){
                     data$travelNb[rowtrip]<-v
                     v<-v+1  
                     #}   #if trip ok, consecutive number
@@ -42,11 +42,12 @@ define_trips<-function(data,dist.min){
         if(length(land.nb)>1){
             for (z in 2:length(land.nb)){
                 onland<-which(data$onlandNb==land.nb[z])
-                if(length(onland)>1){
-                    number<-onland[-c(1,length(onland))]}
                 if(data$travelNb[1]==0){data$onlandNb[1]<-1}
+                if(length(onland)>1){
+                    number<-onland[-c(1,length(onland))]
                 data$onlandNb[number]<-q
-                q<-q+1
+                q<-q+1}
+               
             }    #if trip ok, consecutive number
         } #end of loop within trips
         
@@ -72,7 +73,7 @@ raw_trips_summary_ind<-function (dataset){
     ids<-unique(dataset$id) 
     dist.max.all.trips<-NULL
     
-    for (k in 1:length(id)){
+    for (k in 1:length(ids)){
         temp<-subset(dataset,dataset$id==ids[k])
         nb.trip<-sort(unique(temp$travelNb))
         
@@ -81,8 +82,9 @@ raw_trips_summary_ind<-function (dataset){
                 tempo<-subset(temp,temp$travelNb==nb.trip[a])
                 
                 maxi<-data.frame(ID=ids[k],travelNb=nb.trip[a],
-                                 Distmax(km)=max(tempo$distmax),TripDur(h)=sum(tempo$difftime)/60,
-                                 maxDiffTime(h)=max(tempo$difftime)/60,TotalPath(km)=tempo$totalpath[nrow(tempo)])
+                                 Distmaxkm=max(tempo$distmax),TripDurh=sum(tempo$difftimemin)/60,
+                                 maxDiffTimeh=max(tempo$difftimemin)/60,TotalPathkm=tempo$totalpath[nrow(tempo)],
+                                 nlocs=nrow(tempo))
                 dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
                 
             }
@@ -92,3 +94,41 @@ raw_trips_summary_ind<-function (dataset){
     
     return(dist.max.all.trips)
 }
+
+
+
+######################################################################################
+## Function to give the summary of all periods on land by individuals
+######################################################################################
+
+raw_land_summary_ind<-function (dataset){
+    ids<-unique(dataset$id) 
+    all.land<-NULL
+    
+    for (k in 1:length(ids)){
+        temp<-subset(dataset,dataset$id==ids[k])
+        nb.land<-sort(unique(temp$onlandNb))
+        
+        if (length(nb.land)>1){
+            for (a in 2:length(nb.land)){
+                tempo<-subset(temp,temp$onlandNb==nb.land[a])
+                
+                maxo<-data.frame(ID=ids[k],onlandNb=nb.land[a],
+                                 TripDurh=sum(tempo$difftimemin)/60,
+                                 maxDiffTimeh=max(tempo$difftimemin)/60,
+                                 nlocs=nrow(tempo))
+                all.land<-rbind(all.land,maxo)
+                
+            }
+        }
+    }
+    
+    
+    return(all.land)
+}
+
+
+######################################################################################
+## Function to clean trips based on trip thresholds 
+######################################################################################
+
