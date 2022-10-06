@@ -16,25 +16,28 @@ The dataset is stored on the online database Movebank. It can be downloaded dire
 #| message: false
 library(move)
 library(here)
+library(forcats)
 library(tidyverse)
+library(readxl)
 library(ggplot2)
 library(viridis)
+library(gridExtra)
 library(sf)
 library(rgdal)
 library(fields)
 
 source(here("R","Functions.R"))
 
-# loginStored <- movebankLogin(username="AurorePonchon", password="XXX")
-# gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
+ loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
+ gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
 # metadata<-getMovebankStudy(study=gannets,login=loginStored)
 # getMovebankSensorsAttributes(study=gannets,login=loginStored)
 # reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
-# locations <- getMovebankData(study=gannets, login=loginStored,
-#                              removeDuplicatedTimestamps=TRUE)
-# save(locations,file=here("data","raw","gannets_rouzic_raw_2022.Rdata"))
+ move.rouzic <- getMovebankData(study=gannets, login=loginStored,
+                              removeDuplicatedTimestamps=TRUE)
+ save(move.rouzic,file=here("data","raw","gannets_rouzic_raw_2022.Rdata"))
 # 
-# leroySPDF <- as(locations,"SpatialPointsDataFrame")
+# leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
 # writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
 
 load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
@@ -42,17 +45,31 @@ load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
 
 ## 2- Processing location data
 
-Movebank datasets contain a lot of information that are not all necessary for the analysis. Then, we calculate distances and time between locations and add a few variables to summarize time spent on land and at-sea. We illustrate the raw data by some descriptive plots
+Movebank datasets contain a lot of information that are not all necessary for the analysis so data were filtered. Some data from other files were added, such as individual serology. Then, we calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. We illustrate the raw data locations by some descriptive plots.
 
 ```{r}
 #| echo: false
 #| include: true
 
-colo_coord<-data.frame(long=-3.436752, lat=48.899868)
+colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
 
-locs<- locations@data %>% 
+#import of external individual data for serology
+serol.rouzic<-read_excel(here("data","raw","Données Fous Rouzik 1O2022.xlsx"),
+              sheet="Equipement GPS",
+              n_max =16) %>% 
+       select(Balise,Résultats_test_Grippe_Aviaire) %>% 
+       rename(id=Balise, sero=Résultats_test_Grippe_Aviaire) %>% 
+       mutate(id=as.factor(id),
+              sero=as.factor(sero)) %>% 
+        mutate(sero = recode(sero,"Negatif"  = "Negative" , 
+                                   "Positif" = "Positive"  ,
+                                   "Inhibé" =  "Unknown" ,
+                                   "Negatif au 1/10" = "LateNegative" ))
+       
+#select location data
+locs.rouzic<- move.rouzic@data %>% 
     select(tag_local_identifier,timestamp,location_long,location_lat,
-           barometric_height, ground_speed,heading) %>% 
+           barometric_height, ground_speed) %>% 
     rename(id=tag_local_identifier,
            datetime=timestamp,
            long=location_long,
@@ -60,17 +77,23 @@ locs<- locations@data %>%
            alt=barometric_height,
            speed=ground_speed)  %>% 
     arrange(id,datetime) %>% 
-    mutate(id=as.factor(id))
+    mutate(id=as.factor(id),site=as.factor("Rouzic")) %>% 
+    left_join(serol.rouzic,by="id",keep=F) %>% 
+    mutate(id=fct_drop(id))
+    
 
 
-ids<-unique(levels(locs$id))
+ids<-unique(levels(locs.rouzic$id))
+colo.ind<-tim.colors(length(ids))
 
 #create new object with distance and time differences
-locs.dist<-NULL
+rawLoc.rouzic<-NULL
+#distance threshold set to 1km away from the colony to determine a trip
+dist.threshold<-2    
 
 #loop through each individual 
 for (i in 1:length(ids)){
-    ind.loc<-locs %>% 
+    ind.loc<-locs.rouzic %>% 
         filter(id==ids[i]) %>% 
         mutate(distmax=0,
                distadj=0,
@@ -89,32 +112,93 @@ ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
 ind.loc[l,"difftimemin"]<-difftime(ind.loc[l,"datetime"],
                                    ind.loc[l-1,"datetime"], units="mins")
 ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
-                                   colo_coord[c(1,2)], miles = F)
+                                   colo_coord_rouzic[c(1,2)], miles = F)
 }
 
-    #distance threshold set to 1km away from the colony
-dist.threshold<-1    
-     
+#define periods on land and at sea   
 ind.loc<-define_trips(data=ind.loc,dist.min=dist.threshold)
-locs.dist<-rbind(locs.dist,ind.loc)    
+rawLoc.rouzic<-rbind(rawLoc.rouzic,ind.loc)    
 }
+
+save(rawLoc.rouzic,file=here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+
+
+load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+
+#Plot locations
+distloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=distmax),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+     geom_line(aes(color=id),show.legend=F,size=0.8) +
+#    scale_y_continuous(limits=c(0,400)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+diffloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=difftimemin/60),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Time gaps (h)")
+
+grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips<-raw_trips_summary_ind(locs.dist)
-raw_land<-raw_land_summary_ind(locs.dist)
+raw_trips2<-raw_trips_summary_ind(rawLoc.rouzic)
+raw_land2<-raw_land_summary_ind(rawLoc.rouzic)
 
-remove(locations,ind.loc,locs)
+write.csv(raw_trips2,file=here("data","NewlyCreatedData","raw_trips_summary2.csv"),
+          row.names = F,quote=F)
+write.csv(raw_land2,file=here("data","NewlyCreatedData","raw_land_summary2.csv"),
+          row.names = F,quote=F)
 
-##Parameters to define a trip 
-last.dist<-10       #distance threshold (in km) when having only one location between 2 trips
+raw_trips2 %>% 
+    group_by(id) %>% 
+    summarize(Nbtrip=n(),
+              Mindurh=min(TripDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+raw_land2 %>% 
+    group_by(id) %>% 
+    summarize(Nbland=n(),
+              Mindurh=min(LandDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+
+remove(move.rouzic,ind.loc,locs.rouzic)
+
+
+##plot trip and land periods
+
+
+dist<-ggplot(raw_trips1,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+#    scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+dur<-ggplot(raw_trips1,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+    scale_y_continuous(limits=c(0,100)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h")
+
+grid.arrange(dist,dur,ncol=2)
+
+##Parameters to define real trips and folter locations
 row.thres<- 4               #number of rows constituting a trip
-dur.thres<-0.4         #min duration of a trip
+dur.thres<-1         #min duration of a trip
 
 
-#select trips and periods on land
+clean_trips_summary<-raw_trips1 %>% 
+    filter(TripDurh > dur.thres & nlocs >= row.thres)
+
+clean_land_summary<-raw_land1 %>% 
+    filter(TripDurh > dur.thres & nlocs >= 3)
+
+
 ```
 
-## 3- Visualisation of individual trips
+## 3- Visualisation of individual trips and charateristics
 
 ```{r}
 
@@ -131,6 +215,7 @@ print(raw_map)
 
 time.dist<-ggplot(temp,aes(x=datetime,y=distmax)) %>% 
     geom_point(color=colo[i])
+
 
 
 

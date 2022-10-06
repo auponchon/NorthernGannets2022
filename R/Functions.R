@@ -43,6 +43,8 @@ define_trips<-function(data,dist.min){
             for (z in 2:length(land.nb)){
                 onland<-which(data$onlandNb==land.nb[z])
                 if(data$travelNb[1]==0){data$onlandNb[1]<-1}
+                if(data$travelNb[nrow(data)]==0){
+                    data$onlandNb[nrow(data)]<-data$onlandNb[nrow(data)-1]}
                 if(length(onland)>1){
                     number<-onland[-c(1,length(onland))]
                 data$onlandNb[number]<-q
@@ -57,7 +59,9 @@ define_trips<-function(data,dist.min){
       #calculate total distance for the trip
             for (b in 2:nrow(data)){
                 if(data$travelNb[b]>0){
-                    data[b,"totalpath"]<-data$distadj[b]+data$totalpath[b-1]}
+                    ifelse(data[b-1,"travelNb"] != 0 & data[b-1,"travelNb"]!=data[b,"travelNb"],
+                           data[b,"totalpath"]<-0,
+                           data[b,"totalpath"]<-data$distadj[b]+data$totalpath[b-1])}
             }
     
     return(data)
@@ -81,10 +85,14 @@ raw_trips_summary_ind<-function (dataset){
             for (a in 2:length(nb.trip)){
                 tempo<-subset(temp,temp$travelNb==nb.trip[a])
                 
-                maxi<-data.frame(ID=ids[k],travelNb=nb.trip[a],
-                                 Distmaxkm=max(tempo$distmax),TripDurh=sum(tempo$difftimemin)/60,
-                                 maxDiffTimeh=max(tempo$difftimemin)/60,TotalPathkm=tempo$totalpath[nrow(tempo)],
-                                 nlocs=nrow(tempo))
+                maxi<-data.frame(id=ids[k],
+                                 travelNb=nb.trip[a],
+                                 Distmaxkm=max(tempo$distmax),
+                                 TripDurh=sum(tempo$difftimemin)/60,
+                                 maxDiffTimeh=max(tempo$difftimemin)/60,
+                                 TotalPathkm=tempo$totalpath[nrow(tempo)],
+                                 nlocs=nrow(tempo),
+                                 DateEnd=tempo$datetime[nrow(tempo)])
                 dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
                 
             }
@@ -113,10 +121,12 @@ raw_land_summary_ind<-function (dataset){
             for (a in 2:length(nb.land)){
                 tempo<-subset(temp,temp$onlandNb==nb.land[a])
                 
-                maxo<-data.frame(ID=ids[k],onlandNb=nb.land[a],
-                                 TripDurh=sum(tempo$difftimemin)/60,
+                maxo<-data.frame(id=ids[k],
+                                 onlandNb=nb.land[a],
+                                 LandDurh=sum(tempo$difftimemin)/60,
                                  maxDiffTimeh=max(tempo$difftimemin)/60,
-                                 nlocs=nrow(tempo))
+                                 nlocs=nrow(tempo),
+                                 DateEnd=tempo$datetime[nrow(tempo)])
                 all.land<-rbind(all.land,maxo)
                 
             }
