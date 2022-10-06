@@ -7,7 +7,7 @@ define_trips<-function(data,dist.min){
         w<-1
         z<-1
         for (a in 1:nrow(data)){
-            #Define points away from the colony (travalNb) and in the colony (onlandNb)
+            #Define points away from the colony (travelNb) and in the colony (onlandNb)
             ifelse(data[a,"distmax"]>=dist.min,  
                    data[a,"travelNb"]<-w,
                    data[a,"onlandNb"]<-z) 
@@ -87,6 +87,7 @@ raw_trips_summary_ind<-function (dataset){
                 
                 maxi<-data.frame(id=ids[k],
                                  travelNb=nb.trip[a],
+                                 trip.id=tempo$trip.id[1],
                                  Distmaxkm=max(tempo$distmax),
                                  TripDurh=sum(tempo$difftimemin)/60,
                                  maxDiffTimeh=max(tempo$difftimemin)/60,
@@ -102,7 +103,6 @@ raw_trips_summary_ind<-function (dataset){
     
     return(dist.max.all.trips)
 }
-
 
 
 ######################################################################################
@@ -123,6 +123,7 @@ raw_land_summary_ind<-function (dataset){
                 
                 maxo<-data.frame(id=ids[k],
                                  onlandNb=nb.land[a],
+                                 onland.id=paste(nb.land[a],sep="."),
                                  LandDurh=sum(tempo$difftimemin)/60,
                                  maxDiffTimeh=max(tempo$difftimemin)/60,
                                  nlocs=nrow(tempo),
@@ -137,8 +138,42 @@ raw_land_summary_ind<-function (dataset){
     return(all.land)
 }
 
+######################################################################################
+## Function to interpolate locations with regular intervals
+######################################################################################
+interpol<-function(data,time.int){
 
-######################################################################################
-## Function to clean trips based on trip thresholds 
-######################################################################################
+locs<-data %>% 
+    dplyr::filter(travelNb!=0)
+
+#convert to a ltraj object
+locs<-droplevels(locs)
+traj<-as.ltraj(locs[,c('long','lat')],date=locs$datetime,id=locs$id,
+               burst=locs$trip.id, infolocs=locs)
+
+#redistribute data with a resolution of 60s and project it in UTM
+traj2=redisltraj(traj,u=time.int,burst='burst',type='time')
+#loc.interp<-ltraj2spdf(traj2)
+
+#convert the ltraj object to a dataframe and add missing info
+loc.interp<-ld(traj2) %>% 
+    rename(datetime=date,
+           long=x,
+           lat=y,
+           distadj=dist,
+           trip.id=burst) %>% 
+    mutate(site="rouzic") %>% 
+    dplyr::select(id,datetime,long,lat,site,distadj,trip.id)
+
+loc.interp$distmax<-as.vector(rdist.earth(loc.interp[,c("long","lat")],
+                               colo_coord_rouzic[1,c("long","lat")],miles=F))
+
+loc.interp$difftimemin<-c(0,difftime( loc.interp$datetime[2:nrow(loc.interp)],
+                                     loc.interp$datetime[1:nrow(loc.interp)-1],units="mins"))
+
+loc.interp$difftimemin[loc.interp$difftimemin < 15]<-0
+
+
+return(loc.interp)
+}
 
