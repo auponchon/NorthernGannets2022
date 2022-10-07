@@ -73,33 +73,24 @@ define_trips<-function(data,dist.min){
 ## Function to give the summary of all raw trips by individuals
 ######################################################################################
 
-raw_trips_summary_ind<-function (dataset){
-    ids<-unique(dataset$id) 
+trips_summary_ind<-function (dataset){
+    nb.trip<-unique(dataset$trip.id) 
     dist.max.all.trips<-NULL
     
-    for (k in 1:length(ids)){
-        temp<-subset(dataset,dataset$id==ids[k])
-        nb.trip<-sort(unique(temp$travelNb))
-        
-        if (length(nb.trip)>1){
-            for (a in 2:length(nb.trip)){
-                tempo<-subset(temp,temp$travelNb==nb.trip[a])
-                
-                maxi<-data.frame(id=ids[k],
-                                 travelNb=nb.trip[a],
-                                 trip.id=tempo$trip.id[1],
-                                 Distmaxkm=max(tempo$distmax),
-                                 TripDurh=sum(tempo$difftimemin)/60,
-                                 maxDiffTimeh=max(tempo$difftimemin)/60,
-                                 TotalPathkm=tempo$totalpath[nrow(tempo)],
-                                 nlocs=nrow(tempo),
-                                 DateEnd=tempo$datetime[nrow(tempo)])
+    for (k in 1:length(nb.trip)){
+        temp<-subset(dataset,dataset$trip.id==nb.trip[k])
+                maxi<-data.frame(id=temp$id[1],
+                           #      travelNb=nb.trip[k],
+                                 trip.id=temp$trip.id[1],
+                                 Distmaxkm=max(temp$distmax),
+                                 TripDurh=sum(temp$difftimemin)/60,
+                                 maxDiffTimeh=max(temp$difftimemin)/60,
+                                 TotalPathkm=temp$totalpath[nrow(temp)],
+                                 nlocs=nrow(temp),
+                                 DateEnd=temp$datetime[nrow(temp)])
                 dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
                 
             }
-        }
-    }
-    
     
     return(dist.max.all.trips)
 }
@@ -109,7 +100,7 @@ raw_trips_summary_ind<-function (dataset){
 ## Function to give the summary of all periods on land by individuals
 ######################################################################################
 
-raw_land_summary_ind<-function (dataset){
+land_summary_ind<-function (dataset){
     ids<-unique(dataset$id) 
     all.land<-NULL
     
@@ -160,19 +151,29 @@ loc.interp<-ld(traj2) %>%
     rename(datetime=date,
            long=x,
            lat=y,
-           distadj=dist,
            trip.id=burst) %>% 
-    mutate(site="rouzic") %>% 
-    dplyr::select(id,datetime,long,lat,site,distadj,trip.id)
+    mutate(site="rouzic",
+           totalpath=0,
+           distadj=0) %>% 
+    dplyr::select(id,datetime,long,lat,site,trip.id,totalpath,distadj)
 
 loc.interp$distmax<-as.vector(rdist.earth(loc.interp[,c("long","lat")],
                                colo_coord_rouzic[1,c("long","lat")],miles=F))
 
 loc.interp$difftimemin<-c(0,difftime( loc.interp$datetime[2:nrow(loc.interp)],
                                      loc.interp$datetime[1:nrow(loc.interp)-1],units="mins"))
+loc.interp$difftimemin[loc.interp$difftimemin != 15]<-0
 
-loc.interp$difftimemin[loc.interp$difftimemin < 15]<-0
-
+for (b in 2:nrow(loc.interp)){
+    ifelse(loc.interp[b-1,"trip.id"] != loc.interp[b,"trip.id"],
+           loc.interp[b,"distadj"]<-0,
+           loc.interp[b,"distadj"]<-rdist.earth(loc.interp[b,c("long","lat")],
+                                                loc.interp[b-1,c("long","lat")], miles = F))
+    
+        ifelse(loc.interp[b-1,"trip.id"] != loc.interp[b,"trip.id"],
+               loc.interp[b,"totalpath"]<-0,
+               loc.interp[b,"totalpath"]<-loc.interp$distadj[b]+loc.interp$totalpath[b-1])
+}
 
 return(loc.interp)
 }

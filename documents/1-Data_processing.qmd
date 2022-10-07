@@ -44,7 +44,6 @@ source(here("R","Functions.R"))
 # leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
 # writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
 
-load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
 ```
 
 ## 2- Processing location data
@@ -56,6 +55,8 @@ Movebank datasets contain a lot of information that are not all necessary for th
 #| include: true
 #| warning: false
 #| message: false
+
+load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
 
 colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
 
@@ -148,8 +149,8 @@ diffloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=difftimemin/60),group=id)+
 grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips1<-raw_trips_summary_ind(rawLoc.rouzic)
-raw_land1<-raw_land_summary_ind(rawLoc.rouzic)
+raw_trips1<-trips_summary_ind(rawLoc.rouzic)
+raw_land1<-land_summary_ind(rawLoc.rouzic)
 
 write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
           row.names = F,quote=F)
@@ -176,9 +177,6 @@ summy.land<-raw_land1 %>%
 
 kbl(summy.land,caption="Summary of periods on land") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
-
-
-remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic)
 
 
 ##plot trip and land periods
@@ -220,11 +218,13 @@ cleanLocs.rouzic<-rawLoc.rouzic %>%
     dplyr::filter(rawLoc.rouzic$trip.id %in% clean.trip.nb$trip.id)
 
 save(cleanLocs.rouzic,file=here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
+
+remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic,dist,dur,diffloc,distloc,correl)
 ```
 
 ## 3- Interpolation
 
-As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min.We then compared each raw clean trips with interpolations.
+As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw clean trips with interpolations.
 
 ```{r}
 
@@ -237,13 +237,10 @@ reso<-60*15 #(in seconds)
 loc.clean.interp<-interpol(data=cleanLocs.rouzic,time.int=reso)
 loc.clean.interp$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp$id,
                                                    cleanLocs.rouzic$id)]
+save(loc.clean.interp,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
-save(loc.clean.interp,file=here("Data","NewlyCreatedData","clean_interp_rouzic.RData"))
+##Ilustrate interpolations with raw data
 
-##Ilustrate interoplations with raw data
-#library(rnaturalearth)
-#library(rnaturalearthdata)
-library(maps)
 
 for (a in 1:length(ids)){
     raw<-cleanLocs.rouzic %>% 
@@ -259,25 +256,90 @@ for (a in 1:length(ids)){
           pt.cex=c(0.8,1.2))
 }
 
+
+
 ```
 
-## 4- Interpolation of at-sea locations
-
-In order to determine an appropriate time interval, we investigate time difference between at-sea locations to identify potential gaps in the data and see when they occur. We also investigate the duration of at-sea trips.
+## 4- Summary of clean trips
 
 ```{r}
 #| echo: false
 #| include: true
 
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+
+clean_trips_interp<-trips_summary_ind(loc.clean.interp)
+
+##plot trip and land periods
+cleandist<-ggplot(clean_trips_interp,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+cleandur<-ggplot(clean_trips_interp,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+    scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h")
+grid.arrange(cleandist,cleandur,ncol=2)
+
+correl<-ggplot(clean_trips_interp,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+print(correl)
 
 ```
 
-After examination, 96% of data have a time interval of less than 15min so interpolation can be based on this time threshold.
+## 5- Effect of time on trip charateristics (GLMM)
 
 ```{r}
 #| echo: false
 #| include: true
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+
+library(lme4)
+
+trips.interp.nomigr<-clean_trips_interp %>% 
+    dplyr::filter(Distmaxkm < 300) %>% 
+    mutate(day=match(format(DateEnd,format="%F"), unique(date)))
+
+#Analysis with maximal distance
+ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) + 
+    title("Maximal distance to colony over time by individual")
+
+glmm.dist<-lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
+     
+plot(glmm.dist)
+summary(glmm.dist,corr=F)
+
+#Analysis with trip duration
+ggplot(trips.interp.nomigr,aes(x=day,y=TripDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2)+
+   title("Trip duration over time by individual")
+
+glmm.dur<-lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr)
+     
+plot(glmm.dur)
+summary(glmm.dur,corr=F)
+
+#Analysis with total path
+ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    title("Total trip distance over time by individual")
 
 
+glmm.dur<-lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
+     
+plot(glmm.dur)
+summary(glmm.dur,corr=F)
 
 ```
