@@ -23,7 +23,6 @@ library(ggplot2)
 library(viridis)
 library(gridExtra)
 library(sf)
-library(rgdal)
 library(fields)
 library(kableExtra)
 library(conflicted)
@@ -32,17 +31,17 @@ library(adehabitatLT)
 
 source(here("R","Functions.R"))
 
- # loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
- # gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
+  loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
+  gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
 # metadata<-getMovebankStudy(study=gannets,login=loginStored)
 # getMovebankSensorsAttributes(study=gannets,login=loginStored)
 # reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
- # move.rouzic <- getMovebankData(study=gannets, login=loginStored,
- #                              removeDuplicatedTimestamps=TRUE)
- # save(move.rouzic,file=here("data","raw","gannets_rouzic_raw_2022.Rdata"))
-# 
-# leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
-# writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+  move.rouzic <- getMovebankData(study=gannets, login=loginStored,
+                               removeDuplicatedTimestamps=TRUE)
+  save(move.rouzic,file=here("data","raw","gannets_rouzic_raw_2022.Rdata"))
+ 
+ leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
+ writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
 
 ```
 
@@ -224,7 +223,7 @@ remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic,dist,dur,diffloc,distloc,cor
 
 ## 3- Interpolation
 
-As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw clean trips with interpolations.
+As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw clean trips with interpolations. It appears that for 1 individual (222276), interpolation badly recreates 2 trips, as they cross Brittany following the coastline. Note that maps are bounded at \> 47° N to have a better focus on the study area before migration.
 
 ```{r}
 
@@ -300,31 +299,33 @@ print(correl)
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 library(lme4)
+library(lattice)
+library(lmerTest)
 
 trips.interp.nomigr<-clean_trips_interp %>% 
     dplyr::filter(Distmaxkm < 300) %>% 
-    mutate(day=match(format(DateEnd,format="%F"), unique(date)))
+    mutate(day=match(format(DateEnd,format="%F"), 
+                     unique(format(DateEnd,format="%F"))))
 
 #Analysis with maximal distance
 ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
                                colour=id))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2) + 
-    title("Maximal distance to colony over time by individual")
+    ggtitle("Maximal distance to colony over time by individual")
 
-glmm.dist<-lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
+glmm.dist<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
      
-plot(glmm.dist)
 summary(glmm.dist,corr=F)
-
+ lattice::dotplot(ranef(glmm.dist))$id
 #Analysis with trip duration
 ggplot(trips.interp.nomigr,aes(x=day,y=TripDurh,
                                colour=id))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2)+
-   title("Trip duration over time by individual")
+   ggtitle("Trip duration over time by individual")
 
-glmm.dur<-lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr)
+glmm.dur<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr)
      
 plot(glmm.dur)
 summary(glmm.dur,corr=F)
@@ -334,12 +335,38 @@ ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
                                colour=id))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2) +
-    title("Total trip distance over time by individual")
+    ggtitle("Total trip distance over time by individual")
 
 
-glmm.dur<-lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
+glmm.path<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
      
-plot(glmm.dur)
+lattice::dotplot(ranef(glmm.path))$id
+summary(glmm.path,corr=F)
+plot_model(glmm.path,type="eff",terms="day")
+```
+
+## 6- Effect of time on colony attendance (GLMM)
+
+```{r}
+#| echo: false
+#| include: true
+
+lands<-raw_land1 %>% 
+    dplyr::filter(LandDurh > 1) %>% 
+    mutate(day=match(format(DateEnd,format="%F"), 
+                     unique(format(DateEnd,format="%F"))))
+
+#Analysis with maximal distance
+ggplot(lands,aes(x=day,y=LandDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) + 
+    ggtitle("Periods on land (h)")
+
+glmm.dur<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id), data=lands)
+     
+plot_model(glmm.dur,type="eff",terms="day")
 summary(glmm.dur,corr=F)
 
+   lattice::dotplot(ranef(glmm.dur))$id
 ```
