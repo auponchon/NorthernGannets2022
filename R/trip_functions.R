@@ -1,7 +1,6 @@
 ######################################################################################
 ## Function to give a trip number based on the consecutive distances to the colony
 ######################################################################################
-
 define_trips<-function(data,dist.min){
     
         w<-1
@@ -176,5 +175,14 @@ for (b in 2:nrow(loc.interp)){
 }
 
 return(loc.interp)
+}
+
+
+######################################################################################
+## Function to remove duplicated date/time values with a 50s buffer
+######################################################################################
+
+make_unique <- function(x) {
+    xts::make.time.unique(x$datetime,eps = 30)
 }
 

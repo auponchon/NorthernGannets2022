@@ -1,7 +1,7 @@
 ---
 title: "Northern gannets Rouzic 2022"
 author: "Aurore Ponchon"
-format: html
+format: docx
 editor: visual
 ---
 
@@ -29,7 +29,14 @@ library(conflicted)
 library(adehabitatLT)
 
 
-source(here("R","Functions.R"))
+source(here("R","trip_functions.R"))
+
+#WGS84 projection
+projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+#Coordinates of Rouzix colony
+colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
+
 
   loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
   gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
@@ -47,7 +54,7 @@ source(here("R","Functions.R"))
 
 ## 2- Processing location data
 
-Movebank datasets contain a lot of information that are not all necessary for the analysis so data were filtered. Some data from other files were added, such as individual serology. Then, we calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. We illustrate the raw data locations by some descriptive plots.
+Movebank datasets contain a lot of information that are not all necessary for the analysis so data were filtered. Some data from other files were added, such as individual serology. Then, I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. We illustrate the raw data locations by some descriptive plots.
 
 ```{r}
 #| echo: false
@@ -56,8 +63,6 @@ Movebank datasets contain a lot of information that are not all necessary for th
 #| message: false
 
 load(here("data","raw","gannets_rouzic_raw_2022.Rdata"))
-
-colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
 
 #import of external individual data for serology
 serol.rouzic<-read_excel(here("data","raw","Données Fous Rouzik 1O2022.xlsx"),
@@ -108,7 +113,7 @@ for (i in 1:length(ids)){
                travelNb=0,
                onlandNb=0)
   
-    print(c("Processing individual ", i))
+  #  print(c("Processing individual ", i))
       
   #loop through each line to calculate distance and time difference with previous location
 for (l in 2:nrow(ind.loc)){
@@ -133,19 +138,19 @@ save(rawLoc.rouzic,file=here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 
 #Plot locations
-distloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=distmax),group=id)+
-    geom_point(aes(color=id),show.legend=F) +
-     geom_line(aes(color=id),show.legend=F,size=0.8) +
-#    scale_y_continuous(limits=c(0,400)) +
-    scale_color_manual(values=colo.ind)+
-    labs(x="Date",y="Maximal distance to colony (km)")
-
-diffloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=difftimemin/60),group=id)+
-    geom_point(aes(color=id),show.legend=F) +
-    scale_color_manual(values=colo.ind)+
-    labs(x="Date",y="Time gaps (h)")
-
-grid.arrange(distloc,diffloc,ncol=2)
+# distloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=distmax),group=id)+
+#     geom_point(aes(color=id),show.legend=F) +
+#      geom_line(aes(color=id),show.legend=F,size=0.8) +
+# #    scale_y_continuous(limits=c(0,400)) +
+#     scale_color_manual(values=colo.ind)+
+#     labs(x="Date",y="Maximal distance to colony (km)")
+# 
+# diffloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=difftimemin/60),group=id)+
+#     geom_point(aes(color=id),show.legend=F) +
+#     scale_color_manual(values=colo.ind)+
+#     labs(x="Date",y="Time gaps (h)")
+# 
+# grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
 raw_trips1<-trips_summary_ind(rawLoc.rouzic)
@@ -163,8 +168,8 @@ summy.trips<-raw_trips1 %>%
               maxDiffh=max(maxDiffTimeh),
               minLocs=min(nlocs))
 
-kbl(summy.trips,caption="Summary of raw trips") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+# kbl(summy.trips,caption="Summary of raw trips") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
 
 
 summy.land<-raw_land1 %>% 
@@ -174,8 +179,8 @@ summy.land<-raw_land1 %>%
               maxDiffh=max(maxDiffTimeh),
               minLocs=min(nlocs))
 
-kbl(summy.land,caption="Summary of periods on land") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+# kbl(summy.land,caption="Summary of periods on land") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
 
 
 ##plot trip and land periods
@@ -190,13 +195,13 @@ dur<-ggplot(raw_trips1,aes(x=DateEnd,y=TripDurh ),group=id)+
     scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Trip duration (h")
-grid.arrange(dist,dur,ncol=2)
+#grid.arrange(dist,dur,ncol=2)
 
 correl<-ggplot(raw_trips1,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
-print(correl)
+#print(correl)
 
 land<-ggplot(raw_land1,aes(x=DateEnd,y=LandDurh ),group=id)+
     geom_point(aes(color=id)) +
@@ -219,19 +224,32 @@ cleanLocs.rouzic<-rawLoc.rouzic %>%
 save(cleanLocs.rouzic,file=here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
 
 remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic,dist,dur,diffloc,distloc,correl)
+
+ SPDF <- SpatialPointsDataFrame(coords = cleanLocs.rouzic[,c("long","lat")], 
+                                data = cleanLocs.rouzic,
+                               proj4string = CRS(projcrs))
+ writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+
 ```
 
 ## 3- Interpolation
 
-As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw clean trips with interpolations. It appears that for 1 individual (222276), interpolation badly recreates 2 trips, as they cross Brittany following the coastline. Note that maps are bounded at \> 47° N to have a better focus on the study area before migration.
+As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw trip with interpolations. It appears that for at least 5 individuals (222269, 222272, 222276, 222279,222280), interpolation badly recreates trips, as reconstituted trips cross Brittany without following the coastline. Illustrated maps are bounded at \> 47° N to have a better focus on the study area before migration.
 
 ```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
 
 load(here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
-
+library(rnaturalearth)
 
 ##Interpolation
 reso<-60*15 #(in seconds)
+
+
 
 loc.clean.interp<-interpol(data=cleanLocs.rouzic,time.int=reso)
 loc.clean.interp$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp$id,
@@ -240,19 +258,66 @@ save(loc.clean.interp,file=here("Data","NewlyCreatedData","loc_clean_interp_rouz
 
 ##Ilustrate interpolations with raw data
 
+longmn=-5
+longmx=2
+latmn=47
+latmx=52
+
+#crop polygon shapefile to the study area
+world <- ne_countries(scale = 50, returnclass = 'sf')
+colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,                         
+           coords = c("long", "lat"),
+           crs = projcrs)
+
+europe <- c("Belgium","Denmark","France",
+                   "Germany","Ireland","Netherlands",
+                   "Portugal","Spain","Sweden")
+europe_map <- 
+    world %>% 
+    dplyr::filter(name %in% europe)
+
+bbox_europe <- st_bbox(c(xmin= longmn , ymin=latmn ,xmax=longmx, ymax = latmx), 
+                       crs = projcrs)
+europe_crop <- st_crop(europe_map, bbox_europe)
+
 
 for (a in 1:length(ids)){
     raw<-cleanLocs.rouzic %>% 
-        dplyr::filter(id==ids[a] & lat > 47) 
-    interp.ind<-loc.clean.interp %>% 
-        dplyr::filter(id==ids[a]& lat > 47)
-    
+        dplyr::filter(id==ids[a] & lat > 47) %>% 
+        st_as_sf(.,                         
+           coords = c("long", "lat"),
+           crs = projcrs)
+   
+     interp.ind<-loc.clean.interp %>% 
+        dplyr::filter(id==ids[a]& lat > 47) %>% 
+     st_as_sf(.,                         
+           coords = c("long", "lat"),
+           crs = projcrs)
 
-    plot(interp.ind$long,interp.ind$lat,pch=16,col="red",cex=1.2,main=ids[a])
-    points(raw$long,raw$lat,pch=16,col="black",cex=0.8)
-    points(colo_coord_rouzic$long,colo_coord_rouzic$lat,pch=17,col="blue",cex=1.5)
-   legend("topleft","(x,y)",legend=c("raw","interp"),pch=16,col=c("black","red"),
-          pt.cex=c(0.8,1.2))
+##Ilustrate interpolations with raw data
+longmin=floor(extent(interp.ind)[1])
+longmax=ceiling(extent(interp.ind)[2])
+latmin=floor(extent(interp.ind)[3])
+latmax=ceiling(extent(interp.ind)[4]) 
+     
+     
+mapa<-ggplot(data = europe_crop) +
+    geom_sf(fill="grey") +
+    coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
+     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+     geom_sf(data = raw, shape = 17, colour = "black") +
+    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+    labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
+ print(mapa)   
+    
+    
+    
+# plot(map$type,main=ids[a])
+#     plot(interp.ind$long,interp.ind$lat,pch=16,col="red",cex=1.2)
+#     points(raw$long,raw$lat,pch=16,col="black",cex=0.8)
+#     points(colo_coord_rouzic$long,colo_coord_rouzic$lat,pch=17,col="blue",cex=1.5)
+#    legend("topleft","(x,y)",legend=c("raw","interp"),pch=16,col=c("black","red"),
+#           pt.cex=c(0.8,1.2))
 }
 
 
@@ -261,9 +326,14 @@ for (a in 1:length(ids)){
 
 ## 4- Summary of clean trips
 
+At-sea trips retained are at least \>1h long, \>1km from the colony and have more than 4 locations.
+
 ```{r}
 #| echo: false
 #| include: true
+#| warning: false
+#| message: false
+
 
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
@@ -293,14 +363,21 @@ print(correl)
 
 ## 5- Effect of time on trip charateristics (GLMM)
 
+According to GLMM, no effect of day on maximal distance, weak effect on trip duration and no effect on the total distance travelled during a trip.
+
 ```{r}
 #| echo: false
 #| include: true
+#| warning: false
+#| message: false
+
+
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 library(lme4)
 library(lattice)
 library(lmerTest)
+library(sjPlot)
 
 trips.interp.nomigr<-clean_trips_interp %>% 
     dplyr::filter(Distmaxkm < 300) %>% 
@@ -316,9 +393,12 @@ ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
 
 glmm.dist<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
      
-summary(glmm.dist,corr=F)
+summary(glmm.dist)
  lattice::dotplot(ranef(glmm.dist))$id
-#Analysis with trip duration
+ plot_model(glmm.dist,type="eff",terms="day")
+
+ 
+ #Analysis with trip duration
 ggplot(trips.interp.nomigr,aes(x=day,y=TripDurh,
                                colour=id))+
     geom_point()+
@@ -326,10 +406,12 @@ ggplot(trips.interp.nomigr,aes(x=day,y=TripDurh,
    ggtitle("Trip duration over time by individual")
 
 glmm.dur<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr)
-     
-plot(glmm.dur)
-summary(glmm.dur,corr=F)
-
+ 
+summary(glmm.dur)
+lattice::dotplot(ranef(glmm.dur))$id
+ plot_model(glmm.dur,type="eff",terms="day")
+ 
+ 
 #Analysis with total path
 ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
                                colour=id))+
@@ -339,17 +421,20 @@ ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
 
 
 glmm.path<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
-     
+   summary(glmm.path)  
 lattice::dotplot(ranef(glmm.path))$id
-summary(glmm.path,corr=F)
 plot_model(glmm.path,type="eff",terms="day")
 ```
 
 ## 6- Effect of time on colony attendance (GLMM)
 
+According to GLMM, no effect of day on duration of periods on land at the colony.
+
 ```{r}
 #| echo: false
 #| include: true
+#| warning: false
+#| message: false
 
 lands<-raw_land1 %>% 
     dplyr::filter(LandDurh > 1) %>% 
@@ -363,10 +448,8 @@ ggplot(lands,aes(x=day,y=LandDurh,
     geom_smooth(method="lm",alpha=0.2) + 
     ggtitle("Periods on land (h)")
 
-glmm.dur<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id), data=lands)
-     
-plot_model(glmm.dur,type="eff",terms="day")
-summary(glmm.dur,corr=F)
-
-   lattice::dotplot(ranef(glmm.dur))$id
+glmm.durnest<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id), data=lands)
+summary(glmm.durnest,corr=F)    
+plot_model(glmm.durnest,type="eff",terms="day")
+lattice::dotplot(ranef(glmm.dur))$id
 ```
