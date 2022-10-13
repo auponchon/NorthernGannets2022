@@ -178,11 +178,3 @@ return(loc.interp)
 }
 
 
-######################################################################################
-## Function to remove duplicated date/time values with a 50s buffer
-######################################################################################
-
-make_unique <- function(x) {
-    xts::make.time.unique(x$datetime,eps = 30)
-}
-

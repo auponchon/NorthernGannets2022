@@ -39,11 +39,8 @@ for (b in 1:length(trip)){
        
     sf_locs <- tbl_locs %>% 
         dplyr::arrange(id,datetime) %>% 
-        dplyr::group_by(id) %>% tidyr::nest() %>% 
-        dplyr::mutate(unique_time = purrr::map(data, make_unique)) %>% 
-        tidyr::unnest(cols = c(data, unique_time)) %>% 
-        dplyr::select(-datetime) %>% 
-        rename(datetime = unique_time) %>% 
+        dplyr::group_by(id,datetime) %>% 
+        dplyr::filter(difftimemin >=1) %>% 
         sf::st_as_sf(., coords = c("long","lat")) %>% 
         sf::st_set_crs(projcrs)
     
@@ -107,19 +104,20 @@ for (b in 1:length(trip)){
     initial = list(a=c(colo_coord_rouzic$long[1],0,colo_coord_rouzic$lat[1],0),
                    P=diag(c(10000^2,5400^2,10000^2,5400^2)))
     
-fit<-    crwMLE(
-        mov.model=~1,
-        data=harborSeal, coord=c("x","y"), Time.name="Time", 
-        initial.state=initial, fixPar=fixPar, theta=c(rep(log(5000),3),log(3*3600), 0),
-        constr=constr,
-        control=list(maxit=2000, trace=1, REPORT=1)
-    )
-    
+# fit<-    crwMLE(
+#         mov.model=~1,
+#         data=sf_locs, coord=c("long","lat"), Time.name="datetime", 
+#         initial.state=initial, fixPar=fixPar, theta=c(rep(log(5000),3),log(3*3600), 0),
+#         constr=constr,
+#         control=list(maxit=2000, trace=1, REPORT=1)
+#     )
+#     
     
     tbl_locs_fit <- sf_locs %>% 
-        dplyr::mutate(fit = furrr::future_pmap(list(d = data,fixpar = fixpar),
+        dplyr::mutate(fit = furrr::future_pmap(list(d = data,fixpar = fixpar, seed=T),
                                                fit_crawl),
                       params = map(fit, crawl::tidy_crwFit))
+    
     
     tbl_locs_fit <- tbl_locs_fit %>% 
         dplyr::mutate(predict = furrr::future_map(fit,
@@ -144,10 +142,16 @@ fit<-    crwMLE(
         sf::st_as_sf() %>% 
         sf::st_set_crs(3395)
     
+    sf_locs_sp<-sf_locs$data[[1]] %>% 
+        mutate(geometry = sf::st_sfc(geometry)) %>% 
+        sf::st_as_sf() %>% 
+        sf::st_set_crs(3395)
+    
     ggplot() + 
         annotation_map_tile(type = esri_ocean,zoomin = 1,progress = "none") +
-        layer_spatial(sf_lines, size = 0.85,color = "black") +
-        layer_spatial(sf_pred_lines, size = 0.75,aes(color = id)) +
+        layer_spatial(sf_lines, size = 1,color = "black") +
+        layer_spatial(sf_pred_lines, size = 0.75, aes(color = "red")) +
+        layer_spatial(sf_locs_sp,size=1.5,aes(color="cyan"),shape=16) +
         scale_x_continuous(expand = expansion(mult = c(.6, .6))) +
         scale_y_continuous(expand = expansion(mult = c(0.35, 0.35))) +
         theme(legend.position = "none") +

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.0.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Aurore Ponchon">
+
+<title>Northern gannets Rouzic 2022</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+<script src="1-Data_processing_files/libs/clipboard/clipboard.min.js"></script>
+<script src="1-Data_processing_files/libs/quarto-html/quarto.js"></script>
+<script src="1-Data_processing_files/libs/quarto-html/popper.min.js"></script>
+<script src="1-Data_processing_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="1-Data_processing_files/libs/quarto-html/anchor.min.js"></script>
+<link href="1-Data_processing_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="1-Data_processing_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="1-Data_processing_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="1-Data_processing_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="1-Data_processing_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Northern gannets Rouzic 2022</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Aurore Ponchon </p>
+          </div>
+  </div>
+    
+    
+  </div>
+  
+
+</header>
+
+<section id="importing-data-from-movebank" class="level2">
+<h2 class="anchored" data-anchor-id="importing-data-from-movebank">1- Importing data from Movebank</h2>
+<p>The dataset is stored on the online database Movebank. It can be downloaded directly from the web as long as the user has an account. Each time the dataset is downloaded, the last locations are added, as some of the devices are still emitting.</p>
+<div class="cell">
+
+</div>
+</section>
+<section id="processing-location-data" class="level2">
+<h2 class="anchored" data-anchor-id="processing-location-data">2- Processing location data</h2>
+<p>Movebank datasets contain a lot of information that are not all necessary for the analysis so data were filtered. Some data from other files were added, such as individual serology. Then, I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. We illustrate the raw data locations by some descriptive plots.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="interpolation" class="level2">
+<h2 class="anchored" data-anchor-id="interpolation">3- Interpolation</h2>
+<p>As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw trip with interpolations. It appears that for at least 5 individuals (222269, 222272, 222276, 222279,222280), interpolation badly recreates trips, as reconstituted trips cross Brittany without following the coastline. Illustrated maps are bounded at &gt; 47° N to have a better focus on the study area before migration.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-12.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-3-14.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="summary-of-clean-trips" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-clean-trips">4- Summary of clean trips</h2>
+<p>At-sea trips retained are at least &gt;1h long, &gt;1km from the colony and have more than 4 locations.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="effect-of-time-on-trip-charateristics-glmm" class="level2">
+<h2 class="anchored" data-anchor-id="effect-of-time-on-trip-charateristics-glmm">5- Effect of time on trip charateristics (GLMM)</h2>
+<p>According to GLMM, no effect of day on maximal distance, weak effect on trip duration and no effect on the total distance travelled during a trip.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(Distmaxkm) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 649
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.5182 -0.6217  0.0827  0.7413  1.8289 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.01412  0.1188  
+ Residual             0.59046  0.7684  
+Number of obs: 274, groups:  id, 13
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 3.819e+00  9.223e-02 5.947e+01  41.409   &lt;2e-16 ***
+day         4.448e-03  4.915e-03 2.406e+02   0.905    0.366    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.777</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TripDurh) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 748.4
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.7933 -0.6051  0.1661  0.5627  3.1639 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.03519  0.1876  
+ Residual             0.84280  0.9180  
+Number of obs: 274, groups:  id, 13
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 2.441e+00  1.158e-01 4.881e+01  21.082   &lt;2e-16 ***
+day         1.187e-02  5.939e-03 2.575e+02   1.999   0.0466 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.740</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TotalPathkm) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 727.6
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4047 -0.6330  0.1201  0.6510  2.7265 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.006181 0.07862 
+ Residual             0.796779 0.89263 
+Number of obs: 274, groups:  id, 13
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 4.732e+00  1.017e-01 7.645e+01  46.505   &lt;2e-16 ***
+day         5.472e-03  5.611e-03 2.091e+02   0.975    0.331    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.816</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-5-9.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="effect-of-time-on-colony-attendance-glmm" class="level2">
+<h2 class="anchored" data-anchor-id="effect-of-time-on-colony-attendance-glmm">6- Effect of time on colony attendance (GLMM)</h2>
+<p>According to GLMM, no effect of day on duration of periods on land at the colony.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(LandDurh) ~ day + (1 | id)
+   Data: lands
+
+REML criterion at convergence: 610.8
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-2.28564 -0.63153  0.04934  0.79782  2.05935 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.07316  0.2705  
+ Residual             0.71652  0.8465  
+Number of obs: 235, groups:  id, 14
+
+Fixed effects:
+              Estimate Std. Error         df t value Pr(&gt;|t|)    
+(Intercept)   2.146528   0.124879  40.124879  17.189   &lt;2e-16 ***
+day          -0.012777   0.006932 232.555898  -1.843   0.0666 .  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-6-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="1-Data_processing_files/figure-html/unnamed-chunk-6-3.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
