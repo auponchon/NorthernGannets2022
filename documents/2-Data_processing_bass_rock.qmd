@@ -1,28 +1,27 @@
 ---
-title: "Northern gannets Rouzic 2022"
+title: "Northern gannets Bass rock 2022"
 author: "Aurore Ponchon"
 format: docx
 editor: visual
 ---
 
-## 1- Importing data from Movebank
+## 1- Importing data
 
-The dataset is stored on the online database Movebank. It can be downloaded directly from the web as long as the user has an account. Each time the dataset is downloaded, the last locations are added, as some of the devices are still emitting.
+GPS data are stored as individual files which need a bit of processing. I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. I illustrate the raw data locations by some descriptive plots.
 
 ```{r}
 #| echo: false
 #| include: true
 #| warning: false
 #| message: false
-library(move)
 library(here)
 library(forcats)
 library(tidyverse)
-library(readxl)
 library(ggplot2)
 library(viridis)
 library(gridExtra)
 library(sf)
+library(rgdal)
 library(fields)
 library(kableExtra)
 library(conflicted)
@@ -35,76 +34,66 @@ source(here("R","trip_functions.R"))
 projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
 #Coordinates of Rouzix colony
-colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
+colo_coord_bassrock<-data.frame(long=-2.641272, lat=56.077072)
+start<-as.POSIXct("2022-08-11 08:00:00",format="%F %H:%M:%S",tz="GMT")
+
+#import 
+files<-list.files(here("data","raw","bass_rock"),
+                  pattern=".pos",
+                  full.names=T)
+tags <- sub(".*Tag","",files)
+tags <- data.frame(id=sub("_.*","",tags),
+                   tag=as.character(1:length(files)))
 
 
-  loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
-  gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
-# metadata<-getMovebankStudy(study=gannets,login=loginStored)
-# getMovebankSensorsAttributes(study=gannets,login=loginStored)
-# reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
-  move.rouzic <- getMovebankData(study=gannets, login=loginStored,
-                               removeDuplicatedTimestamps=TRUE)
-  save(move.rouzic,file=here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
- 
- leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
- writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
 
-```
-
-## 2- Processing location data
-
-Movebank datasets contain a lot of information that are not all necessary for the analysis so data were filtered. Some data from other files were added, such as individual serology. Then, I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. I illustrate the raw data locations by some descriptive plots.
-
-```{r}
-#| echo: false
-#| include: true
-#| warning: false
-#| message: false
-
-load(here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
-
-#import of external individual data for serology
-serol.rouzic<-read_excel(here("data","raw","Données Fous Rouzik 1O2022.xlsx"),
-              sheet="Equipement GPS",
-              n_max =16) %>% 
-      dplyr::select(Balise,Résultats_test_Grippe_Aviaire) %>% 
-       rename(id=Balise, sero=Résultats_test_Grippe_Aviaire) %>% 
-       mutate(id=as.factor(id),
-              sero=as.factor(sero)) %>% 
-        mutate(sero = recode(sero,"Negatif"  = "Negative" , 
-                                   "Positif" = "Positive"  ,
-                                   "Inhibé" =  "Unknown" ,
-                                   "Negatif au 1/10" = "LateNegative" ))
-       
-#select location data
-locs.rouzic<- move.rouzic@data %>% 
-    dplyr::select(tag_local_identifier,timestamp,location_long,location_lat,
-           barometric_height, ground_speed) %>% 
-    rename(id=tag_local_identifier,
-           datetime=timestamp,
-           long=location_long,
-           lat=location_lat,
-           alt=barometric_height,
-           speed=ground_speed)  %>% 
+bassrock_raw<-files %>% 
+    map_dfr(read.table, header=F, sep="," , skip = 5, .id = "filepath" ) %>% 
+    bind_rows() %>% 
+    rename(tag=filepath,
+        Day = V1,
+           Month = V2,
+           Year = V3,
+           Hour = V4,
+           Min = V5,
+           Sec = V6,
+           Sec_of_day = V7,
+           Sats = V8,
+           lat=V9,
+           long=V10,
+           altitude = V11) %>% 
+    left_join(tags, by ="tag") %>% 
+    mutate(datetime=as.POSIXct(strptime(paste(paste(Year,Month,Day,sep="-"),
+                          paste(Hour,Min,Sec,sep=":"),
+                          sep=" "),format="%y-%m-%d %H:%M:%S"),"GMT"),
+           id=as.factor(id),
+           site=as.factor("Rouzic") ) %>% 
+    dplyr::filter(lat!=0 & altitude!=0 & datetime > start) %>% 
+    dplyr::select(id,datetime,long,lat,altitude,site) %>% 
     arrange(id,datetime) %>% 
-    mutate(id=as.factor(id),site=as.factor("Rouzic")) %>% 
-    left_join(serol.rouzic,by="id",keep=F) %>% 
-    mutate(id=fct_drop(id))
-    
+    distinct(id,datetime, .keep_all= TRUE)
 
+  save(bassrock_raw,file=here("data","raw","bass_rock","gannets_bassrock_raw_2022.Rdata"))
+ 
+  
+  SPDF <- SpatialPointsDataFrame(coords = bassrock_raw[,c("long","lat")], 
+                                 data = bassrock_raw,
+                               proj4string = CRS(projcrs))
 
-ids<-unique(levels(locs.rouzic$id))
+ writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets_bassrock", driver="ESRI Shapefile", overwrite_layer =T)
+
+ 
+ ids<-unique(levels(bassrock_raw$id))
 colo.ind<-tim.colors(length(ids))
 
 #create new object with distance and time differences
-rawLoc.rouzic<-NULL
+rawLoc.bassrock<-NULL
 #distance threshold set to 1km away from the colony to determine a trip
 dist.threshold<-1    
 
 #loop through each individual 
 for (i in 1:length(ids)){
-    ind.loc<-locs.rouzic %>% 
+    ind.loc<-bassrock_raw %>% 
         dplyr::filter(id==ids[i]) %>% 
         mutate(distmax=0,
                distadj=0,
@@ -123,42 +112,42 @@ ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
 ind.loc[l,"difftimemin"]<-difftime(ind.loc[l,"datetime"],
                                    ind.loc[l-1,"datetime"], units="mins")
 ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
-                                   colo_coord_rouzic[c(1,2)], miles = F)
+                                   colo_coord_bassrock[c(1,2)], miles = F)
 }
 
 #define periods on land and at sea   
 ind.loc<-define_trips(data=ind.loc,dist.min=dist.threshold)
-rawLoc.rouzic<-rbind(rawLoc.rouzic,ind.loc)    
+rawLoc.bassrock<-rbind(rawLoc.bassrock,ind.loc)    
 }
 
-rawLoc.rouzic$trip.id<-paste(rawLoc.rouzic$id,rawLoc.rouzic$travelNb,sep=".")
-save(rawLoc.rouzic,file=here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+rawLoc.bassrock$trip.id<-paste(rawLoc.bassrock$id,rawLoc.bassrock$travelNb,sep=".")
+save(rawLoc.bassrock,file=here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 
 
-load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 
 #Plot locations
-# distloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=distmax),group=id)+
-#     geom_point(aes(color=id),show.legend=F) +
-#      geom_line(aes(color=id),show.legend=F,size=0.8) +
-# #    scale_y_continuous(limits=c(0,400)) +
-#     scale_color_manual(values=colo.ind)+
-#     labs(x="Date",y="Maximal distance to colony (km)")
-# 
-# diffloc<-ggplot(rawLoc.rouzic,aes(x=datetime,y=difftimemin/60),group=id)+
-#     geom_point(aes(color=id),show.legend=F) +
-#     scale_color_manual(values=colo.ind)+
-#     labs(x="Date",y="Time gaps (h)")
-# 
-# grid.arrange(distloc,diffloc,ncol=2)
+distloc<-ggplot(rawLoc.bassrock,aes(x=datetime,y=distmax),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+     geom_line(aes(color=id),show.legend=F,size=0.8) +
+#    scale_y_continuous(limits=c(0,400)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+diffloc<-ggplot(rawLoc.bassrock,aes(x=datetime,y=difftimemin/60),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Time gaps (h)")
+
+grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips1<-trips_summary_ind(rawLoc.rouzic)
-raw_land1<-land_summary_ind(rawLoc.rouzic)
+raw_trips1<-trips_summary_ind(rawLoc.bassrock)
+raw_land1<-land_summary_ind(rawLoc.bassrock)
 
-write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
+write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary_bassrock.csv"),
           row.names = F,quote=F)
-write.csv(raw_land1,file=here("data","NewlyCreatedData","raw_land_summary1.csv"),
+write.csv(raw_land1,file=here("data","NewlyCreatedData","raw_land_summary_bassrock.csv"),
           row.names = F,quote=F)
 
 summy.trips<-raw_trips1 %>% 
@@ -186,22 +175,22 @@ summy.land<-raw_land1 %>%
 ##plot trip and land periods
 dist<-ggplot(raw_trips1,aes(x=DateEnd,y=Distmaxkm),group=id)+
     geom_point(aes(color=id),show.legend=F) +
-    scale_y_continuous(limits=c(0,200)) +
+    scale_y_continuous(limits=c(0,500)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Maximal distance to colony (km)")
 
 dur<-ggplot(raw_trips1,aes(x=DateEnd,y=TripDurh ),group=id)+
     geom_point(aes(color=id)) +
-    scale_y_continuous(limits=c(0,10)) +
+ #   scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
-    labs(x="Date",y="Trip duration (h")
-#grid.arrange(dist,dur,ncol=2)
+    labs(x="Date",y="Trip duration (h)")
+grid.arrange(dist,dur,ncol=2)
 
 correl<-ggplot(raw_trips1,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
-#print(correl)
+print(correl)
 
 land<-ggplot(raw_land1,aes(x=DateEnd,y=LandDurh ),group=id)+
     geom_point(aes(color=id)) +
@@ -218,23 +207,23 @@ dur.thres<-1         #minimum duration of a trip (in h)
 clean.trip.nb<-raw_trips1 %>%
      dplyr::filter(TripDurh > dur.thres & nlocs >= row.thres) 
 
-cleanLocs.rouzic<-rawLoc.rouzic %>%
-    dplyr::filter(rawLoc.rouzic$trip.id %in% clean.trip.nb$trip.id)
+cleanLocs.bassrock<-rawLoc.bassrock %>%
+    dplyr::filter(rawLoc.bassrock$trip.id %in% clean.trip.nb$trip.id)
 
-save(cleanLocs.rouzic,file=here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
+save(cleanLocs.bassrock,file=here("data","NewlyCreatedData","clean_locs_bassrock.Rdata"))
 
-remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic,dist,dur,diffloc,distloc,correl)
+remove(move.bassrock,ind.loc,locs.bassrock,serol.bassrock,dist,dur,diffloc,distloc,correl)
 
- SPDF <- SpatialPointsDataFrame(coords = cleanLocs.rouzic[,c("long","lat")], 
-                                data = cleanLocs.rouzic,
+ SPDF <- SpatialPointsDataFrame(coords = cleanLocs.bassrock[,c("long","lat")], 
+                                data = cleanLocs.bassrock,
                                proj4string = CRS(projcrs))
- writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+ writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets_bassrock", driver="ESRI Shapefile", overwrite_layer =T)
 
 ```
 
 ## 3- Interpolation
 
-As data has irregular time intervals between consecutive locations, I linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. I then compared each raw trip with interpolations. It appears that for at least 5 individuals (222269, 222272, 222276, 222279,222280), interpolation badly recreates trips, as reconstituted trips cross Brittany without following the coastline. Illustrated maps are bounded at \> 47° N to have a better focus on the study area before migration.
+As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min., as 96% of data have a time interval of less than 15min. We then compared each raw trip with interpolations. It appears that for at least 5 individuals (222269, 222272, 222276, 222279,222280), interpolation badly recreates trips, as reconstituted trips cross Brittany without following the coastline. Illustrated maps are bounded at \> 47° N to have a better focus on the study area before migration.
 
 ```{r}
 #| echo: false
@@ -243,7 +232,7 @@ As data has irregular time intervals between consecutive locations, I linearly i
 #| message: false
 
 
-load(here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 library(rnaturalearth)
 
 ##Interpolation
@@ -251,27 +240,26 @@ reso<-60*15 #(in seconds)
 
 
 
-loc.clean.interp<-interpol(data=cleanLocs.rouzic,
+loc.clean.interp<-interpol(data=cleanLocs.bassrock,
                            time.int=reso,
-                           colony=colo_coord_rouzic)
-loc.clean.interp$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp$id,
-                                                   cleanLocs.rouzic$id)]
-save(loc.clean.interp,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+                           colony=colo_coord_bassrock)
+save(loc.clean.interp,
+     file=here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
 ##Ilustrate interpolations with raw data
 
-longmn=-5
-longmx=2
-latmn=47
-latmx=52
+longmn=-3
+longmx=0
+latmn=54.5
+latmx=57.5
 
 #crop polygon shapefile to the study area
 world <- ne_countries(scale = 50, returnclass = 'sf')
-colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,                         
+colo_sf_bassrock<-st_as_sf(colo_coord_bassrock,                         
            coords = c("long", "lat"),
            crs = projcrs)
 
-europe <- c("Belgium","Denmark","France",
+europe <- c("Belgium","Denmark","France","United Kingdom",
                    "Germany","Ireland","Netherlands",
                    "Portugal","Spain","Sweden")
 europe_map <- 
@@ -284,7 +272,7 @@ europe_crop <- st_crop(europe_map, bbox_europe)
 
 
 for (a in 1:length(ids)){
-    raw<-cleanLocs.rouzic %>% 
+    raw<-cleanLocs.bassrock %>% 
         dplyr::filter(id==ids[a] & lat > 47) %>% 
         st_as_sf(.,                         
            coords = c("long", "lat"),
@@ -297,10 +285,10 @@ for (a in 1:length(ids)){
            crs = projcrs)
 
 ##Ilustrate interpolations with raw data
-longmin=floor(extent(interp.ind)[1])
-longmax=ceiling(extent(interp.ind)[2])
-latmin=floor(extent(interp.ind)[3])
-latmax=ceiling(extent(interp.ind)[4]) 
+longmin=floor(st_bbox(interp.ind)[1])
+longmax=ceiling(st_bbox(interp.ind)[3])
+latmin=floor(st_bbox(interp.ind)[2])
+latmax=ceiling(st_bbox(interp.ind)[4]) 
      
      
 mapa<-ggplot(data = europe_crop) +
@@ -308,7 +296,7 @@ mapa<-ggplot(data = europe_crop) +
     coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
      geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
      geom_sf(data = raw, shape = 17, colour = "black") +
-    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+    geom_sf(data = colo_sf_bassrock, shape = 15, colour = "orange") +
     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
  print(mapa)   
     

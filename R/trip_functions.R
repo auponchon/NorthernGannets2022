@@ -131,7 +131,7 @@ land_summary_ind<-function (dataset){
 ######################################################################################
 ## Function to interpolate locations with regular intervals
 ######################################################################################
-interpol<-function(data,time.int){
+interpol<-function(data,time.int,colony){
 
 locs<-data %>% 
     dplyr::filter(travelNb!=0)
@@ -157,7 +157,7 @@ loc.interp<-ld(traj2) %>%
     dplyr::select(id,datetime,long,lat,site,trip.id,totalpath,distadj)
 
 loc.interp$distmax<-as.vector(rdist.earth(loc.interp[,c("long","lat")],
-                               colo_coord_rouzic[1,c("long","lat")],miles=F))
+                               colony[1,c("long","lat")],miles=F))
 
 loc.interp$difftimemin<-c(0,difftime( loc.interp$datetime[2:nrow(loc.interp)],
                                      loc.interp$datetime[1:nrow(loc.interp)-1],units="mins"))
