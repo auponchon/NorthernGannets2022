@@ -65,7 +65,7 @@ Movebank datasets contain a lot of information that are not all necessary for th
 load(here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
 
 #import of external individual data for serology
-serol.rouzic<-read_excel(here("data","raw","Données Fous Rouzik 1O2022.xlsx"),
+serol.rouzic<-read_excel(here("data","raw","rouzic","Données Fous Rouzik 1O2022.xlsx"),
               sheet="Equipement GPS",
               n_max =16) %>% 
       dplyr::select(Balise,Résultats_test_Grippe_Aviaire) %>% 
@@ -312,14 +312,46 @@ mapa<-ggplot(data = europe_crop) +
     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
  print(mapa)   
     
+tp<-unique(raw$trip.id)  
+   
+for (b in 1:length(tp)) {
+    trp<-raw %>% 
+        dplyr::filter(trip.id ==tp[b] & travelNb!=0)
     
+    intr<-interp.ind %>% 
+        dplyr::filter(trip.id==tp[b])
     
-# plot(map$type,main=ids[a])
-#     plot(interp.ind$long,interp.ind$lat,pch=16,col="red",cex=1.2)
-#     points(raw$long,raw$lat,pch=16,col="black",cex=0.8)
-#     points(colo_coord_rouzic$long,colo_coord_rouzic$lat,pch=17,col="blue",cex=1.5)
-#    legend("topleft","(x,y)",legend=c("raw","interp"),pch=16,col=c("black","red"),
-#           pt.cex=c(0.8,1.2))
+    xmmin<-min(c(extent(trp)[1],extent(intr)[1]))
+   xmmax<-max(c(extent(trp)[2],extent(intr)[2]))
+    ymmin<-min(c(extent(trp)[3],extent(intr)[3]))
+    ymmax<-max(c(extent(trp)[4],extent(intr)[4]))
+    
+   raw_lines <- trp %>% 
+       dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+  dplyr::summarise(do_union = FALSE) %>%
+  sf::st_cast("MULTILINESTRING") 
+   
+ 
+   
+     int_lines <-   intr %>% 
+         dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+  dplyr::summarise(do_union = FALSE) %>%
+  sf::st_cast("MULTILINESTRING") 
+     
+jpeg(filename = here("outputs","clean_trips",paste("rouzic",tp[b],".jpg",sep="_")),
+     res=200,units="cm",width=15,height=15)
+   ma<-ggplot(data = europe_crop) +
+ #   geom_sf(fill="grey") +
+    coord_sf(xlim = c(xmmin,xmmax), ylim = c(ymmin,ymmax), expand = FALSE) +
+     geom_sf(data = intr, shape = 16, colour = colo.ind[a],size=1.2) +
+     geom_sf(data = trp, shape = 17, colour = "black",size=1.5) +
+    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+     geom_sf(data=int_lines,colour=colo.ind[a]) +
+  #   geom_sf(data=raw_lines,colour="black") +
+    labs(title =  tp[b])
+ print(ma)
+ dev.off()
+}
 }
 
 

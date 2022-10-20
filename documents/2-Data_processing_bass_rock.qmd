@@ -325,20 +325,20 @@ At-sea trips retained are at least \>1h long, \>1km from the colony and have mor
 #| message: false
 
 
-load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
 clean_trips_interp<-trips_summary_ind(loc.clean.interp)
 
 ##plot trip and land periods
 cleandist<-ggplot(clean_trips_interp,aes(x=DateEnd,y=Distmaxkm),group=id)+
     geom_point(aes(color=id),show.legend=F) +
-    scale_y_continuous(limits=c(0,200)) +
+ #   scale_y_continuous(limits=c(0,200)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Maximal distance to colony (km)")
 
 cleandur<-ggplot(clean_trips_interp,aes(x=DateEnd,y=TripDurh ),group=id)+
     geom_point(aes(color=id)) +
-    scale_y_continuous(limits=c(0,10)) +
+#    scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Trip duration (h")
 grid.arrange(cleandist,cleandur,ncol=2)
@@ -362,7 +362,7 @@ According to GLMM, no effect of day on maximal distance, weak effect on trip dur
 #| message: false
 
 
-load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
 library(lme4)
 library(lattice)
@@ -370,7 +370,7 @@ library(lmerTest)
 library(sjPlot)
 
 trips.interp.nomigr<-clean_trips_interp %>% 
-    dplyr::filter(Distmaxkm < 300) %>% 
+  #  dplyr::filter(Distmaxkm < 300) %>% 
     mutate(day=match(format(DateEnd,format="%F"), 
                      unique(format(DateEnd,format="%F"))))
 

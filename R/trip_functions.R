@@ -142,7 +142,8 @@ traj<-as.ltraj(locs[,c('long','lat')],date=locs$datetime,id=locs$id,
                burst=locs$trip.id, infolocs=locs)
 
 #redistribute data with a resolution of 60s and project it in UTM
-traj2=redisltraj(traj,u=time.int,burst='burst',type='time')
+traj2=redisltraj(traj,u=time.int,burst='burst',type='time',samplex0=T,
+                 addbit=T)
 #loc.interp<-ltraj2spdf(traj2)
 
 #convert the ltraj object to a dataframe and add missing info
