@@ -129,10 +129,54 @@ land_summary_ind<-function (dataset){
 }
 
 ######################################################################################
-## Function to interpolate locations with regular intervals
+## Function to add last missing location in colony for a trip
 ######################################################################################
-interpol<-function(data,time.int,colony){
 
+add_missing_return<-function(dataset){
+    
+    trip<-unique(dataset$trip.id)
+    
+    for (a in 1:length(trip)){
+        
+        temp.trip<- dataset %>% 
+            dplyr::filter(trip.id==trip[a])
+        
+        if (temp.trip$distmax[nrow(temp.trip)] > dist.threshold & temp.trip$distmax[nrow(temp.trip)] < 15){
+            taily1<-temp.trip[nrow(temp.trip),] 
+            taily<-taily1 %>% 
+                mutate(datetime=datetime+60*10,
+                       long=colo_coord_rouzic$long,
+                       lat=colo_coord_rouzic$lat,
+                       distmax=0,
+                       speed=0,
+                       difftimemin=10,
+                       distadj=as.vector(rdist.earth(temp.trip[nrow(temp.trip),c("long","lat")],
+                                                     colo_coord_rouzic[1,c("long","lat")],miles=F)),
+                       totalpath=temp.trip$totalpath[nrow(temp.trip)] + 
+                           as.vector(rdist.earth(temp.trip[nrow(temp.trip),c("long","lat")],
+                                                 colo_coord_rouzic[1,c("long","lat")],miles=F)))
+            
+            
+            dataset<-rbind(dataset,taily)
+            
+            print(c(a,trip[a]))
+        }   }
+    
+    dataset<-dataset %>%
+        arrange(id,datetime,trip.id)
+    
+    return(dataset)
+    
+    
+}
+
+
+######################################################################################
+## Function to interpolate locations with regular intervals with adehabitatLT
+######################################################################################
+interpol_ltraj<-function(data,time.int,colony){
+library(adehabitatLT)
+    
 locs<-data %>% 
     dplyr::filter(travelNb!=0)
 
@@ -177,5 +221,90 @@ for (b in 2:nrow(loc.interp)){
 
 return(loc.interp)
 }
+
+
+
+######################################################################################
+## Function to interpolate locations with regular intervals with pastecs
+######################################################################################
+interpol_pastecs<-function(data,time.int,colony){
+    library(pastecs)
+    
+    locs<-data %>% 
+        dplyr::filter(travelNb!=0)
+    
+    #convert to a ltraj object
+    locs<-droplevels(locs)
+    
+    
+    trip<-unique(locs$trip.id)
+    
+    new.trip1<-NULL
+    
+    #interpolate data for each trip separately 
+    for (y in 1:length(trip)){
+        tripy<-locs %>% 
+            dplyr::filter(trip.id==trip[y])
+        
+        
+        tripy$TimeSinceOrigin<-rep(0,nrow(tripy))
+        
+        for (z in 1:nrow(tripy)){
+            tripy$TimeSinceOrigin[z]<-difftime(tripy$datetime[z],tripy$datetime[1],units="sec")
+        }
+        
+        
+        # Resampling of long and lat with regular time intervals 
+        sub.lat1 <- regul(x=tripy$TimeSinceOrigin, y=tripy$lat,
+                          n=round((max(tripy$TimeSinceOrigin)/time.int),0),
+                          deltat=time.int, methods="linear",units="sec")
+        sub.lon1 <- regul(x=tripy$TimeSinceOrigin, y=tripy$long,
+                          n=round((max(tripy$TimeSinceOrigin)/time.int),0),
+                          deltat=time.int, methods="linear",units="sec")
+        
+        new.sub <- data.frame(id=rep(tripy$id[1],length(sub.lon1[[1]])),
+                              datetime=tripy$datetime[1]+as.vector(sub.lon1[[1]]),
+                              long=sub.lon1[[2]]$Series, 
+                              lat=sub.lat1[[2]]$Series, 
+                              site=rep(colony$name,length(sub.lon1[[1]])),
+                              travelNb=rep(tripy$travelNb[1],length(sub.lon1[[1]])),
+                              trip.id=rep(trip[y],length(sub.lon1[[1]])))
+        
+        new.sub<-new.sub %>% 
+            mutate(distmax=as.vector(rdist.earth(new.sub[,c("long","lat")],
+                                               colony[1,c(1,2)],miles=F)),
+                   difftimemin=c(0,difftime(new.sub$datetime[2:nrow(new.sub)],
+                                       new.sub$datetime[1:nrow(new.sub)-1],units="mins")),
+                   distadj=0,
+                   totalpath=0,
+                   speed=0,
+                   alt=0,
+                   sero=0,
+                   onlandNb=0)
+        
+        for (z in 2:nrow(new.sub)){
+            new.sub$distadj[z]<-rdist.earth(new.sub[z,c("long","lat")],
+                                            new.sub[z-1,c("long","lat")], miles=F)
+            
+            new.sub$totalpath[z]<-new.sub$totalpath[z-1] + new.sub$distadj[z]
+            new.sub$speed[z]<-new.sub$distadj[z]/new.sub$difftimemin[z]
+        }
+     
+        new.sub<-new.sub %>% 
+            dplyr::select(id,datetime,long,lat,alt,speed,site,sero,distmax,
+                          distadj,totalpath,difftimemin,travelNb,onlandNb,trip.id)
+        
+        new.trip1<-rbind(new.trip1,new.sub)
+    }
+    
+    new.trip<-add_missing_return(new.trip1)
+    return(new.trip)
+}
+
+    
+    
+    
+    
+    
 
 

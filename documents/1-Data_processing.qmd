@@ -26,7 +26,7 @@ library(sf)
 library(fields)
 library(kableExtra)
 library(conflicted)
-library(adehabitatLT)
+
 
 
 source(here("R","trip_functions.R"))
@@ -35,20 +35,20 @@ source(here("R","trip_functions.R"))
 projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
 #Coordinates of Rouzix colony
-colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868)
+colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868,name="rouzic")
 
 
-  loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
-  gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
-# metadata<-getMovebankStudy(study=gannets,login=loginStored)
-# getMovebankSensorsAttributes(study=gannets,login=loginStored)
-# reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
-  move.rouzic <- getMovebankData(study=gannets, login=loginStored,
-                               removeDuplicatedTimestamps=TRUE)
-  save(move.rouzic,file=here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
- 
- leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
- writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+#   loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
+#   gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
+# # metadata<-getMovebankStudy(study=gannets,login=loginStored)
+# # getMovebankSensorsAttributes(study=gannets,login=loginStored)
+# # reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
+#   move.rouzic <- getMovebankData(study=gannets, login=loginStored,
+#                                removeDuplicatedTimestamps=TRUE)
+#   save(move.rouzic,file=here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
+#  
+#  leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
+#  writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
 
 ```
 
@@ -130,8 +130,9 @@ ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
 ind.loc<-define_trips(data=ind.loc,dist.min=dist.threshold)
 rawLoc.rouzic<-rbind(rawLoc.rouzic,ind.loc)    
 }
-
 rawLoc.rouzic$trip.id<-paste(rawLoc.rouzic$id,rawLoc.rouzic$travelNb,sep=".")
+rawLoc.rouzic<-add_missing_return(rawLoc.rouzic)
+
 save(rawLoc.rouzic,file=here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 
 
@@ -156,10 +157,10 @@ load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 raw_trips1<-trips_summary_ind(rawLoc.rouzic)
 raw_land1<-land_summary_ind(rawLoc.rouzic)
 
-write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
-          row.names = F,quote=F)
-write.csv(raw_land1,file=here("data","NewlyCreatedData","raw_land_summary1.csv"),
-          row.names = F,quote=F)
+# write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
+#           row.names = F,quote=F)
+# write.csv(raw_land1,file=here("data","NewlyCreatedData","raw_land_summary1.csv"),
+#           row.names = F,quote=F)
 
 summy.trips<-raw_trips1 %>% 
     group_by(id) %>% 
@@ -228,7 +229,7 @@ remove(move.rouzic,ind.loc,locs.rouzic,serol.rouzic,dist,dur,diffloc,distloc,cor
  SPDF <- SpatialPointsDataFrame(coords = cleanLocs.rouzic[,c("long","lat")], 
                                 data = cleanLocs.rouzic,
                                proj4string = CRS(projcrs))
- writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+ writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets_rouzic", driver="ESRI Shapefile", overwrite_layer =T)
 
 ```
 
@@ -250,10 +251,14 @@ library(rnaturalearth)
 reso<-60*15 #(in seconds)
 
 
+# loc.clean.interp<-interpol_ltraj(data=cleanLocs.rouzic,
+#                            time.int=reso,
+#                            colony=colo_coord_rouzic)
 
-loc.clean.interp<-interpol(data=cleanLocs.rouzic,
+loc.clean.interp<-interpol_pastecs(data=cleanLocs.rouzic,
                            time.int=reso,
                            colony=colo_coord_rouzic)
+
 loc.clean.interp$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp$id,
                                                    cleanLocs.rouzic$id)]
 save(loc.clean.interp,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
@@ -338,7 +343,7 @@ for (b in 1:length(tp)) {
   dplyr::summarise(do_union = FALSE) %>%
   sf::st_cast("MULTILINESTRING") 
      
-jpeg(filename = here("outputs","clean_trips",paste("rouzic",tp[b],".jpg",sep="_")),
+jpeg(filename = here("outputs","clean_trips",paste("rouzic_",tp[b],"pastecs.jpg",sep="_")),
      res=200,units="cm",width=15,height=15)
    ma<-ggplot(data = europe_crop) +
  #   geom_sf(fill="grey") +
