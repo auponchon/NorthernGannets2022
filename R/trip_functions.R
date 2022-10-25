@@ -1,4 +1,33 @@
 ######################################################################################
+## Parameters common to the trip analyses
+######################################################################################
+library(fields)
+
+#WGS84 projection
+projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+#Coordinates of Rouzic colony (France)
+colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868,name="Rouzic")
+#Coordinates of Bass Rock colony (Scotland)
+colo_coord_bassrock<-data.frame(long=-2.641272, lat=56.077072,name="Bass Rock")
+start<-as.POSIXct("2022-08-11 08:00:00",format="%F %H:%M:%S",tz="GMT") #remove positions onland before deployment
+
+
+#Time resolution for interpolation
+reso<-60*15 #(in seconds)
+
+#distance threshold from the colony to determine a trip
+dist.threshold<-1  
+
+##Parameters to define clean trips and filter locations
+row.thres<- 5               #minimum number of rows constituting a trip
+dur.thres<-1         #minimum duration of a trip (in h)
+
+
+
+
+
+######################################################################################
 ## Function to give a trip number based on the consecutive distances to the colony
 ######################################################################################
 define_trips<-function(data,dist.min){
@@ -72,7 +101,7 @@ define_trips<-function(data,dist.min){
 ## Function to give the summary of all raw trips by individuals
 ######################################################################################
 
-trips_summary_ind<-function (dataset){
+trips_summary_ind<-function (dataset,colony){
     nb.trip<-unique(dataset$trip.id) 
     dist.max.all.trips<-NULL
     
@@ -86,7 +115,8 @@ trips_summary_ind<-function (dataset){
                                  maxDiffTimeh=max(temp$difftimemin)/60,
                                  TotalPathkm=temp$totalpath[nrow(temp)],
                                  nlocs=nrow(temp),
-                                 DateEnd=temp$datetime[nrow(temp)])
+                                 DateEnd=temp$datetime[nrow(temp)],
+                                 site = colony$name)
                 dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
                 
             }
@@ -99,7 +129,7 @@ trips_summary_ind<-function (dataset){
 ## Function to give the summary of all periods on land by individuals
 ######################################################################################
 
-land_summary_ind<-function (dataset){
+land_summary_ind<-function (dataset,colony){
     ids<-unique(dataset$id) 
     all.land<-NULL
     
@@ -117,7 +147,8 @@ land_summary_ind<-function (dataset){
                                  LandDurh=sum(tempo$difftimemin)/60,
                                  maxDiffTimeh=max(tempo$difftimemin)/60,
                                  nlocs=nrow(tempo),
-                                 DateEnd=tempo$datetime[nrow(tempo)])
+                                 DateEnd=tempo$datetime[nrow(tempo)],
+                                 site=colony$name)
                 all.land<-rbind(all.land,maxo)
                 
             }
@@ -132,7 +163,7 @@ land_summary_ind<-function (dataset){
 ## Function to add last missing location in colony for a trip
 ######################################################################################
 
-add_missing_return<-function(dataset){
+add_missing_return<-function(dataset,time.int,colony){
     
     trip<-unique(dataset$trip.id)
     
@@ -141,25 +172,25 @@ add_missing_return<-function(dataset){
         temp.trip<- dataset %>% 
             dplyr::filter(trip.id==trip[a])
         
-        if (temp.trip$distmax[nrow(temp.trip)] > dist.threshold & temp.trip$distmax[nrow(temp.trip)] < 15){
+        if (temp.trip$distmax[nrow(temp.trip)] > dist.threshold & temp.trip$distmax[nrow(temp.trip)] < 25){
             taily1<-temp.trip[nrow(temp.trip),] 
             taily<-taily1 %>% 
-                mutate(datetime=datetime+60*10,
-                       long=colo_coord_rouzic$long,
-                       lat=colo_coord_rouzic$lat,
+                mutate(datetime=datetime+time.int,
+                       long=colony$long,
+                       lat=colony$lat,
                        distmax=0,
                        speed=0,
-                       difftimemin=10,
+                       difftimemin=time.int/60,
                        distadj=as.vector(rdist.earth(temp.trip[nrow(temp.trip),c("long","lat")],
-                                                     colo_coord_rouzic[1,c("long","lat")],miles=F)),
+                                                     colony[1,c("long","lat")],miles=F)),
                        totalpath=temp.trip$totalpath[nrow(temp.trip)] + 
                            as.vector(rdist.earth(temp.trip[nrow(temp.trip),c("long","lat")],
-                                                 colo_coord_rouzic[1,c("long","lat")],miles=F)))
+                                                 colony[1,c("long","lat")],miles=F)))
             
             
             dataset<-rbind(dataset,taily)
             
-            print(c(a,trip[a]))
+  #          print(c(a,trip[a]))
         }   }
     
     dataset<-dataset %>%
@@ -297,7 +328,7 @@ interpol_pastecs<-function(data,time.int,colony){
         new.trip1<-rbind(new.trip1,new.sub)
     }
     
-    new.trip<-add_missing_return(new.trip1)
+    new.trip<-add_missing_return(new.trip1,time.int,colony)
     return(new.trip)
 }
 

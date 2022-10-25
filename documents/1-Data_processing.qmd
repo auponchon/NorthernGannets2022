@@ -27,15 +27,7 @@ library(fields)
 library(kableExtra)
 library(conflicted)
 
-
-
 source(here("R","trip_functions.R"))
-
-#WGS84 projection
-projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
-
-#Coordinates of Rouzix colony
-colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868,name="rouzic")
 
 
 #   loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
@@ -92,15 +84,12 @@ locs.rouzic<- move.rouzic@data %>%
     left_join(serol.rouzic,by="id",keep=F) %>% 
     mutate(id=fct_drop(id))
     
-
-
 ids<-unique(levels(locs.rouzic$id))
 colo.ind<-tim.colors(length(ids))
 
+
 #create new object with distance and time differences
 rawLoc.rouzic<-NULL
-#distance threshold set to 1km away from the colony to determine a trip
-dist.threshold<-1    
 
 #loop through each individual 
 for (i in 1:length(ids)){
@@ -131,7 +120,7 @@ ind.loc<-define_trips(data=ind.loc,dist.min=dist.threshold)
 rawLoc.rouzic<-rbind(rawLoc.rouzic,ind.loc)    
 }
 rawLoc.rouzic$trip.id<-paste(rawLoc.rouzic$id,rawLoc.rouzic$travelNb,sep=".")
-rawLoc.rouzic<-add_missing_return(rawLoc.rouzic)
+rawLoc.rouzic<-add_missing_return(rawLoc.rouzic,time.int=reso,colony=colo_coord_rouzic)
 
 save(rawLoc.rouzic,file=here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 
@@ -154,15 +143,15 @@ load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 # grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips1<-trips_summary_ind(rawLoc.rouzic)
-raw_land1<-land_summary_ind(rawLoc.rouzic)
+raw_trips_rouzic<-trips_summary_ind(rawLoc.rouzic)
+raw_land_rouzic<-land_summary_ind(rawLoc.rouzic)
 
-# write.csv(raw_trips1,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
+# write.csv(raw_trips_rouzic,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
 #           row.names = F,quote=F)
-# write.csv(raw_land1,file=here("data","NewlyCreatedData","raw_land_summary1.csv"),
+# write.csv(raw_land_rouzic,file=here("data","NewlyCreatedData","raw_land_summary1.csv"),
 #           row.names = F,quote=F)
 
-summy.trips<-raw_trips1 %>% 
+summy.trips<-raw_trips_rouzic %>% 
     group_by(id) %>% 
     summarize(Nbtrip=n(),
               Mindurh=min(TripDurh),
@@ -173,7 +162,7 @@ summy.trips<-raw_trips1 %>%
 #   kable_styling(bootstrap_options = c("striped", "hover"))
 
 
-summy.land<-raw_land1 %>% 
+summy.land<-raw_land_rouzic %>% 
     group_by(id) %>% 
     summarize(Nbland=n(),
               Mindurh=min(LandDurh),
@@ -185,26 +174,26 @@ summy.land<-raw_land1 %>%
 
 
 ##plot trip and land periods
-dist<-ggplot(raw_trips1,aes(x=DateEnd,y=Distmaxkm),group=id)+
+dist<-ggplot(raw_trips_rouzic,aes(x=DateEnd,y=Distmaxkm),group=id)+
     geom_point(aes(color=id),show.legend=F) +
     scale_y_continuous(limits=c(0,200)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Maximal distance to colony (km)")
 
-dur<-ggplot(raw_trips1,aes(x=DateEnd,y=TripDurh ),group=id)+
+dur<-ggplot(raw_trips_rouzic,aes(x=DateEnd,y=TripDurh ),group=id)+
     geom_point(aes(color=id)) +
     scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Trip duration (h")
 #grid.arrange(dist,dur,ncol=2)
 
-correl<-ggplot(raw_trips1,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+correl<-ggplot(raw_trips_rouzic,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
 #print(correl)
 
-land<-ggplot(raw_land1,aes(x=DateEnd,y=LandDurh ),group=id)+
+land<-ggplot(raw_land_rouzic,aes(x=DateEnd,y=LandDurh ),group=id)+
     geom_point(aes(color=id)) +
   #  scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
@@ -212,11 +201,7 @@ land<-ggplot(raw_land1,aes(x=DateEnd,y=LandDurh ),group=id)+
 print(land)
 
 
-##Parameters to define clean trips and filter locations
-row.thres<- 4               #number of rows constituting a trip
-dur.thres<-1         #minimum duration of a trip (in h)
-
-clean.trip.nb<-raw_trips1 %>%
+clean.trip.nb<-raw_trips_rouzic %>%
      dplyr::filter(TripDurh > dur.thres & nlocs >= row.thres) 
 
 cleanLocs.rouzic<-rawLoc.rouzic %>%
@@ -248,117 +233,123 @@ load(here("data","NewlyCreatedData","clean_locs_rouzic.Rdata"))
 library(rnaturalearth)
 
 ##Interpolation
-reso<-60*15 #(in seconds)
 
 
 # loc.clean.interp<-interpol_ltraj(data=cleanLocs.rouzic,
 #                            time.int=reso,
 #                            colony=colo_coord_rouzic)
 
-loc.clean.interp<-interpol_pastecs(data=cleanLocs.rouzic,
+loc.clean.interp.rouzic<-interpol_pastecs(data=cleanLocs.rouzic,
                            time.int=reso,
                            colony=colo_coord_rouzic)
 
-loc.clean.interp$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp$id,
+loc.clean.interp.rouzic$sero<-cleanLocs.rouzic$sero[match(loc.clean.interp.rouzic$id,
                                                    cleanLocs.rouzic$id)]
-save(loc.clean.interp,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+
+incomplete<-c("222267.1","222267.6","222275.1","222276.1",
+              "222279.8","222279.32","222280.45")
+migration<-c("222269.17","222270.32","222271.25","222272.24","222273.22","222274.25","222275.28","222276.17","222277.10","222278.1","222279.33","222280.46","222281.7")
+
+loc.interp.rouzic <- loc.clean.interp.rouzic %>% 
+    dplyr::filter(!trip.id %in% incomplete) %>% 
+    dplyr::filter(!trip.id %in% migration)
+
+save(loc.interp.rouzic,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 ##Ilustrate interpolations with raw data
-
-longmn=-5
-longmx=2
-latmn=47
-latmx=52
-
-#crop polygon shapefile to the study area
-world <- ne_countries(scale = 50, returnclass = 'sf')
-colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,                         
-           coords = c("long", "lat"),
-           crs = projcrs)
-
-europe <- c("Belgium","Denmark","France",
-                   "Germany","Ireland","Netherlands",
-                   "Portugal","Spain","Sweden")
-europe_map <- 
-    world %>% 
-    dplyr::filter(name %in% europe)
-
-bbox_europe <- st_bbox(c(xmin= longmn , ymin=latmn ,xmax=longmx, ymax = latmx), 
-                       crs = projcrs)
-europe_crop <- st_crop(europe_map, bbox_europe)
-
-
-for (a in 1:length(ids)){
-    raw<-cleanLocs.rouzic %>% 
-        dplyr::filter(id==ids[a] & lat > 47) %>% 
-        st_as_sf(.,                         
-           coords = c("long", "lat"),
-           crs = projcrs)
-   
-     interp.ind<-loc.clean.interp %>% 
-        dplyr::filter(id==ids[a]& lat > 47) %>% 
-     st_as_sf(.,                         
-           coords = c("long", "lat"),
-           crs = projcrs)
-
-##Ilustrate interpolations with raw data
-longmin=floor(extent(interp.ind)[1])
-longmax=ceiling(extent(interp.ind)[2])
-latmin=floor(extent(interp.ind)[3])
-latmax=ceiling(extent(interp.ind)[4]) 
-     
-     
-mapa<-ggplot(data = europe_crop) +
-    geom_sf(fill="grey") +
-    coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
-     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
-     geom_sf(data = raw, shape = 17, colour = "black") +
-    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
-    labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
- print(mapa)   
-    
-tp<-unique(raw$trip.id)  
-   
-for (b in 1:length(tp)) {
-    trp<-raw %>% 
-        dplyr::filter(trip.id ==tp[b] & travelNb!=0)
-    
-    intr<-interp.ind %>% 
-        dplyr::filter(trip.id==tp[b])
-    
-    xmmin<-min(c(extent(trp)[1],extent(intr)[1]))
-   xmmax<-max(c(extent(trp)[2],extent(intr)[2]))
-    ymmin<-min(c(extent(trp)[3],extent(intr)[3]))
-    ymmax<-max(c(extent(trp)[4],extent(intr)[4]))
-    
-   raw_lines <- trp %>% 
-       dplyr::group_by(trip.id) %>% # and year, month, etc as needed
-  dplyr::summarise(do_union = FALSE) %>%
-  sf::st_cast("MULTILINESTRING") 
-   
- 
-   
-     int_lines <-   intr %>% 
-         dplyr::group_by(trip.id) %>% # and year, month, etc as needed
-  dplyr::summarise(do_union = FALSE) %>%
-  sf::st_cast("MULTILINESTRING") 
-     
-jpeg(filename = here("outputs","clean_trips",paste("rouzic_",tp[b],"pastecs.jpg",sep="_")),
-     res=200,units="cm",width=15,height=15)
-   ma<-ggplot(data = europe_crop) +
- #   geom_sf(fill="grey") +
-    coord_sf(xlim = c(xmmin,xmmax), ylim = c(ymmin,ymmax), expand = FALSE) +
-     geom_sf(data = intr, shape = 16, colour = colo.ind[a],size=1.2) +
-     geom_sf(data = trp, shape = 17, colour = "black",size=1.5) +
-    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
-     geom_sf(data=int_lines,colour=colo.ind[a]) +
-  #   geom_sf(data=raw_lines,colour="black") +
-    labs(title =  tp[b])
- print(ma)
- dev.off()
-}
-}
-
+# longmn=-5
+# longmx=2
+# latmn=47
+# latmx=52
+# 
+# #crop polygon shapefile to the study area
+# world <- ne_countries(scale = 50, returnclass = 'sf')
+# colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,                         
+#            coords = c("long", "lat"),
+#            crs = projcrs)
+# 
+# europe <- c("Belgium","Denmark","France",
+#                    "Germany","Ireland","Netherlands",
+#                    "Portugal","Spain","Sweden")
+# europe_map <- 
+#     world %>% 
+#     dplyr::filter(name %in% europe)
+# 
+# bbox_europe <- st_bbox(c(xmin= longmn , ymin=latmn ,xmax=longmx, ymax = latmx), 
+#                        crs = projcrs)
+# europe_crop <- st_crop(europe_map, bbox_europe)
+# 
+# 
+# for (a in 1:length(ids)){
+#     raw<-cleanLocs.rouzic %>% 
+#         dplyr::filter(id==ids[a] & lat > 47) %>% 
+#         st_as_sf(.,                         
+#            coords = c("long", "lat"),
+#            crs = projcrs)
+#    
+#      interp.ind<-loc.clean.interp %>% 
+#         dplyr::filter(id==ids[a]& lat > 47) %>% 
+#      st_as_sf(.,                         
+#            coords = c("long", "lat"),
+#            crs = projcrs)
+# 
+# ##Ilustrate interpolations with raw data
+# longmin=floor(extent(interp.ind)[1])
+# longmax=ceiling(extent(interp.ind)[2])
+# latmin=floor(extent(interp.ind)[3])
+# latmax=ceiling(extent(interp.ind)[4]) 
+#      
+#      
+# mapa<-ggplot(data = europe_crop) +
+#     geom_sf(fill="grey") +
+#     coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
+#      geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+#      geom_sf(data = raw, shape = 17, colour = "black") +
+#     geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+#     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
+#  print(mapa)   
+#     
+# tp<-unique(raw$trip.id)  
+#    
+# for (b in 1:length(tp)) {
+#     trp<-raw %>% 
+#         dplyr::filter(trip.id ==tp[b] & travelNb!=0)
+#     
+#     intr<-interp.ind %>% 
+#         dplyr::filter(trip.id==tp[b])
+#     
+#     xmmin<-min(c(extent(trp)[1],extent(intr)[1]))
+#    xmmax<-max(c(extent(trp)[2],extent(intr)[2]))
+#     ymmin<-min(c(extent(trp)[3],extent(intr)[3]))
+#     ymmax<-max(c(extent(trp)[4],extent(intr)[4]))
+#     
+#    raw_lines <- trp %>% 
+#        dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+#   dplyr::summarise(do_union = FALSE) %>%
+#   sf::st_cast("MULTILINESTRING") 
+#    
+#  
+#    
+#      int_lines <-   intr %>% 
+#          dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+#   dplyr::summarise(do_union = FALSE) %>%
+#   sf::st_cast("MULTILINESTRING") 
+#      
+# jpeg(filename = here("outputs","clean_trips",paste("rouzic_",tp[b],"pastecs.jpg",sep="_")),
+#      res=200,units="cm",width=15,height=15)
+#    ma<-ggplot(data = europe_crop) +
+#  #   geom_sf(fill="grey") +
+#     coord_sf(xlim = c(xmmin,xmmax), ylim = c(ymmin,ymmax), expand = FALSE) +
+#      geom_sf(data = intr, shape = 16, colour = colo.ind[a],size=1.2) +
+#      geom_sf(data = trp, shape = 17, colour = "black",size=1.5) +
+#     geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+#      geom_sf(data=int_lines,colour=colo.ind[a]) +
+#   #   geom_sf(data=raw_lines,colour="black") +
+#     labs(title =  tp[b])
+#  print(ma)
+#  dev.off()
+# }
+# }# 
 
 
 ```
@@ -376,23 +367,25 @@ At-sea trips retained are at least \>1h long, \>1km from the colony and have mor
 
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
-clean_trips_interp<-trips_summary_ind(loc.clean.interp)
+clean_trips_interp_rouzic<-loc.interp.rouzic %>% 
+                    trips_summary_ind(.)
+                    # dplyr::filter(Distmaxkm < 300)
 
 ##plot trip and land periods
-cleandist<-ggplot(clean_trips_interp,aes(x=DateEnd,y=Distmaxkm),group=id)+
+cleandist<-ggplot(clean_trips_interp_rouzic,aes(x=DateEnd,y=Distmaxkm),group=id)+
     geom_point(aes(color=id),show.legend=F) +
-    scale_y_continuous(limits=c(0,200)) +
+ #   scale_y_continuous(limits=c(0,300)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Maximal distance to colony (km)")
 
-cleandur<-ggplot(clean_trips_interp,aes(x=DateEnd,y=TripDurh ),group=id)+
+cleandur<-ggplot(clean_trips_interp_rouzic,aes(x=DateEnd,y=TripDurh ),group=id)+
     geom_point(aes(color=id)) +
-    scale_y_continuous(limits=c(0,10)) +
+#    scale_y_continuous(limits=c(0,100)) +
     scale_color_manual(values=colo.ind)+
-    labs(x="Date",y="Trip duration (h")
+    labs(x="Date",y="Trip duration (h)")
 grid.arrange(cleandist,cleandur,ncol=2)
 
-correl<-ggplot(clean_trips_interp,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+correl<-ggplot(clean_trips_interp_rouzic,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
@@ -418,8 +411,7 @@ library(lattice)
 library(lmerTest)
 library(sjPlot)
 
-trips.interp.nomigr<-clean_trips_interp %>% 
-    dplyr::filter(Distmaxkm < 300) %>% 
+trips.interp.nomigr<-clean_trips_interp_rouzic %>% 
     mutate(day=match(format(DateEnd,format="%F"), 
                      unique(format(DateEnd,format="%F"))))
 
@@ -475,7 +467,7 @@ According to GLMM, no effect of day on duration of periods on land at the colony
 #| warning: false
 #| message: false
 
-lands<-raw_land1 %>% 
+lands<-raw_land_rouzic %>% 
     dplyr::filter(LandDurh > 1) %>% 
     mutate(day=match(format(DateEnd,format="%F"), 
                      unique(format(DateEnd,format="%F"))))

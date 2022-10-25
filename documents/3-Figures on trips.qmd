@@ -1,0 +1,111 @@
+---
+title: "3-Figures with the 2 colonies"
+format: html
+editor: visual
+---
+
+## 1- Boxplots of trip characteristics
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+library(here)
+library(forcats)
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(gridExtra)
+
+source(here("R","trip_functions.R"))
+
+#bassrock for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
+trips.bassrock<-trips_summary_ind(loc.interp.bassrock,colony=colo_coord_bassrock)
+#bassrock for nest attendance
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
+land.bassrock<-rawLoc.bassrock %>% 
+    land_summary_ind(.,colony=colo_coord_bassrock) %>% 
+    dplyr::filter(LandDurh > 1) 
+
+#rouzic for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+trips.rouzic<-trips_summary_ind(loc.interp.rouzic,colony=colo_coord_rouzic)
+#rouzic for nest attendance
+load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+land.rouzic<-rawLoc.rouzic %>% 
+    land_summary_ind(.,colony=colo_coord_rouzic) %>% 
+    dplyr::filter(LandDurh > 1) 
+ 
+ 
+trips.2col<-rbind(trips.bassrock,trips.rouzic)                 
+lands<-rbind(land.bassrock,land.rouzic)
+
+mycol<-viridis(2,begin=0.5,end=0.8)
+
+#maximal distance
+dist<-ggplot(trips.2col,aes(x=site,y=Distmaxkm, fill=site,
+                                       colour=site) ) +
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
+ labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)  +
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+print(dist)
+
+durat<-ggplot(trips.2col,aes(x=site,y=TripDurh, fill=site,
+                                       colour=site) ) +
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
+ labs(y="Trip duration (h)",tag="b)",x="") +
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)  +
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+print(durat)
+
+patho<-ggplot(trips.2col,aes(x=site,y=TotalPathkm , fill=site,
+                                       colour=site) ) +
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
+ labs(y="Total distance travelled (km)",tag="c)",x="") +
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)  +
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+print(patho)
+
+nest<-ggplot(lands,aes(x=site,y=LandDurh, fill=site,
+                                       colour=site) ) +
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
+ labs(y="Nest attendance (h)",tag="d)",x="") +
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)  +
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+print(nest)
+
+
+correlt<-ggplot(trips.2col,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=site)) +
+    scale_colour_manual(values=mycol) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+print(correlt)
+
+```
