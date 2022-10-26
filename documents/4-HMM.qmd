@@ -1,0 +1,85 @@
+---
+title: "4-HMM"
+format: html
+editor: visual
+---
+
+## Fitting a HMM
+
+```{r}
+library(moveHMM)
+
+load("~/Projects/Northern_gannets_Rouzic_2022/GannetsRouzic2022/data/NewlyCreatedData/loc_clean_interp_bassrock.RData")
+
+essai<-loc.interp.bassrock
+
+proc.essai<-prepData(essai,type="LL",coordNames = c("long","lat"))
+
+par(mfrow=c(1,2))
+hist(proc.essai$step)
+hist(proc.essai$angle)
+
+#finding the right set of parameters for step length and turning angles  for 3 states
+ set.seed(12345)
+ nruns<-25
+ mles<-vector("numeric",length=nruns)
+
+ #test for von mise distribution for angle concentrations
+for (foo in 1:nruns){
+  print(foo)
+  mu0<-sort(c(runif(1,0.05,2),runif(1,0.5,5),runif(1,2,20)) ) # means for step length
+  sigma0<-c(runif(1,0,0.2),runif(1,0.3,5),runif(1,1,20))  #sd for step length
+#  zeromass0<-runif(3,0,0.01)
+  stepPar0<-c(mu0,sigma0)#,zeromass0)  #joint object for step length
+  angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
+  kappa0<-runif(3,0,5)  # angle concentration
+  anglePar0<-c(angleMean0,kappa0)
+
+  print(c(stepPar0,anglePar0))
+
+  m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+             formula=~1,angleDist="vm")
+  mles[foo]<--m0$mod$minimum
+
+  print( mles[foo])
+}
+
+table(round(mles))
+
+#lowest likelihood: -19711.51 with von mise
+#parameters:  mu0<-c(2.5,4.20,17.01)
+ #sigma0<-c(2.65,10.47,7.25)  
+ #zeromass0<-c(0.0087,0.0025,0.0079)
+ # angleMean0<-c(0,3.14,0)   
+ # kappa0<-c(4.63,3.10,3.22)
+
+ #test for wrapped cauchy for angle concentrations
+#   set.seed(12345)
+# for (foo in 1:nruns){
+#   print(foo)
+#   mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
+#   sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
+#   zeromass0<-runif(3,0,0.01)
+#   stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
+#   angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
+#   kappa0<-runif(3,0,5)  # angle concentration
+#   anglePar0<-c(angleMean0,kappa0)
+# 
+#   print(c(stepPar0,anglePar0))
+# 
+#   m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+#              formula=~1,angleDist="wrpcauchy")
+#   mles[foo]<--m0$mod$minimum
+# 
+#   print( mles[foo])
+# }
+# 
+# table(round(mles))
+
+ #lowest likelihood: -18638.03 with wrpcauchy
+ #parameters:  mu0<-c(1.32,8.5,9.59)
+ #sigma0<-c(1.42,14.50,9.51)  
+ #zeromass0<-c(0.0082,0.0081,0.0091)
+ # angleMean0<-c(0,0,0)  
+ # kappa0<-c(0.79,0.99,0.69)
+```
