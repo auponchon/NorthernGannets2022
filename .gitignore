@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 /Data
+/outputs/clean_trips
+/outputs/crawl

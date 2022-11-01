@@ -4,7 +4,10 @@
 library(fields)
 
 #WGS84 projection
-projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+wgscrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+#France and UK projection
+projcrs<-"+proj=utm +zone=30 +ellps=WGS84"
 
 #Coordinates of Rouzic colony (France)
 colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868,name="Rouzic")
@@ -332,9 +335,16 @@ interpol_pastecs<-function(data,time.int,colony){
     return(new.trip)
 }
 
-    
-    
-    
+######################################################################################
+## Function to plot a legend in ggplot
+######################################################################################
+
+g_legend<-function(a.gplot){
+    tmp <- ggplot_gtable(ggplot_build(a.gplot))
+    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+    legend <- tmp$grobs[[leg]]
+    return(legend)}
+
     
     
 

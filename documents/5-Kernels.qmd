@@ -1,0 +1,62 @@
+---
+title: "4-Kernels"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+# Calculating kernels
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+
+library(here)
+library(tidyverse)
+library(viridis)
+library(gridExtra)
+library(adehabitatHR)
+library(sf)
+library(rgdal)
+
+source(here("R","trip_functions.R"))
+
+#bassrock for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+
+land<-readOGR(dsn=here("data","NewlyCreatedData","shapefiles"),layer="euro_afri_map")
+proj4string(land)<-wgscrs
+land_proj<-spTransform(land, projcrs)
+
+mycol<-mako(4,begin=0.3,end=0.75)
+
+coordinates(loc.interp.bassrock)<-c("long","lat")
+proj4string(loc.interp.bassrock) <- wgscrs
+bassrock_proj<-spTransform(loc.interp.bassrock, projcrs)
+
+KUD.bassrock<- kernelUD(bassrock_proj[,"site"],same4all=T,h=10000,grid=1000)
+    KUDvol.bassrock <- getvolumeUD(KUD.bassrock)
+    ver90.bassrock<-getverticeshr(KUDvol.bassrock ,90)
+    ver50.bassrock<-getverticeshr(KUDvol.bassrock ,50)
+  
+coordinates(loc.interp.rouzic)<-c("long","lat")
+proj4string(loc.interp.rouzic) <- wgscrs
+rouzic_proj<-spTransform(loc.interp.rouzic, projcrs)
+
+KUD.rouzic<- kernelUD(rouzic_proj[,"site"],h=10000,same4all=T,grid=1000)
+    KUDvol.rouzic <- getvolumeUD(KUD.rouzic)
+    ver90.rouzic<-getverticeshr(KUDvol.rouzic ,90)
+    ver50.rouzic<-getverticeshr(KUDvol.rouzic ,50)
+
+ 
+    par(mfrow=c(1,2))    
+plot(ver90.bassrock,col=mycol[2], border=mycol[2],main="Kernel Bass Rock")
+plot(ver50.bassrock,col=mycol[1], border=mycol[1],add=T)
+plot(land_proj,col="grey90",add=T)
+
+plot(ver90.rouzic,col=mycol[4], border=mycol[4],main="Kernel Rouzic")
+plot(ver50.rouzic,col=mycol[3], border=mycol[3],add=T)
+plot(land_proj,col="grey90",add=T)
+
+```

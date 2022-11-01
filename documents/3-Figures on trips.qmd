@@ -1,10 +1,12 @@
 ---
-title: "3-Figures with the 2 colonies"
+title: "3-Trips characteristics"
 format: html
 editor: visual
 ---
 
-## 1- Boxplots of trip characteristics
+## Plots with LME predictions
+
+Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.
 
 ```{r}
 #| echo: false
@@ -12,11 +14,12 @@ editor: visual
 #| warning: false
 #| message: false
 library(here)
-library(forcats)
 library(tidyverse)
 library(ggplot2)
 library(viridis)
 library(gridExtra)
+library(nlme)
+library(emmeans)
 
 source(here("R","trip_functions.R"))
 
@@ -38,74 +41,225 @@ land.rouzic<-rawLoc.rouzic %>%
     land_summary_ind(.,colony=colo_coord_rouzic) %>% 
     dplyr::filter(LandDurh > 1) 
  
+ trips<-trips.bassrock %>% 
+        rbind(trips.rouzic) %>% 
+       mutate(day=match(format(DateEnd,format="%F"), 
+                     sort(unique(format(DateEnd,format="%F")))))
  
-trips.2col<-rbind(trips.bassrock,trips.rouzic)                 
-lands<-rbind(land.bassrock,land.rouzic)
-
-mycol<-viridis(2,begin=0.5,end=0.8)
-
-#maximal distance
-dist<-ggplot(trips.2col,aes(x=site,y=Distmaxkm, fill=site,
-                                       colour=site) ) +
-  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
-  geom_jitter(width=0.1, show.legend = FALSE)+
-#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
- labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
-  scale_fill_manual(values=mycol) +
-  scale_colour_manual(values=mycol)  +
-  theme(text = element_text(size=10),
-        axis.text = element_text(size=10),
-        legend.text = element_text(size=10),
-        axis.title.x=element_blank())
-print(dist)
-
-durat<-ggplot(trips.2col,aes(x=site,y=TripDurh, fill=site,
-                                       colour=site) ) +
-  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
-  geom_jitter(width=0.1, show.legend = FALSE)+
-#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
- labs(y="Trip duration (h)",tag="b)",x="") +
-  scale_fill_manual(values=mycol) +
-  scale_colour_manual(values=mycol)  +
-  theme(text = element_text(size=10),
-        axis.text = element_text(size=10),
-        legend.text = element_text(size=10),
-        axis.title.x=element_blank())
-print(durat)
-
-patho<-ggplot(trips.2col,aes(x=site,y=TotalPathkm , fill=site,
-                                       colour=site) ) +
-  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
-  geom_jitter(width=0.1, show.legend = FALSE)+
-#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
- labs(y="Total distance travelled (km)",tag="c)",x="") +
-  scale_fill_manual(values=mycol) +
-  scale_colour_manual(values=mycol)  +
-  theme(text = element_text(size=10),
-        axis.text = element_text(size=10),
-        legend.text = element_text(size=10),
-        axis.title.x=element_blank())
-print(patho)
-
-nest<-ggplot(lands,aes(x=site,y=LandDurh, fill=site,
-                                       colour=site) ) +
-  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
-  geom_jitter(width=0.1, show.legend = FALSE)+
-#  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
- labs(y="Nest attendance (h)",tag="d)",x="") +
-  scale_fill_manual(values=mycol) +
-  scale_colour_manual(values=mycol)  +
-  theme(text = element_text(size=10),
-        axis.text = element_text(size=10),
-        legend.text = element_text(size=10),
-        axis.title.x=element_blank())
-print(nest)
+trips.bassrock<-trips %>% 
+    dplyr::filter(site=="Bass Rock")
+trips.rouzic<-trips %>% 
+     dplyr::filter(site=="Rouzic")
 
 
-correlt<-ggplot(trips.2col,aes(x=log(TripDurh),y=log(Distmaxkm)))+
-    geom_point(aes(color=site)) +
-    scale_colour_manual(values=mycol) +
-    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
-print(correlt)
+lands<-land.bassrock %>% 
+    rbind(land.rouzic ) %>% 
+    mutate(day=match(format(DateEnd,format="%F"), 
+                     sort(unique(format(DateEnd,format="%F")))))
 
+land.bassrock<-lands %>% 
+    dplyr::filter(site=="Bass Rock")
+land.rouzic<-lands %>% 
+     dplyr::filter(site=="Rouzic")
+
+
+mycol<-mako(2,begin=0.35,end=0.7)
+
+
+daysx<-c("12/08","21/08","31/08","10/09","20/09","30/09","15/10")
+newdatrouz<-expand.grid(site=unique(trips.rouzic$site),
+                    day=seq(min(trips.rouzic$day),
+                            max(trips.rouzic$day),1))
+
+newdatbass<-expand.grid(site=unique(trips.bassrock$site),
+                    day=seq(min(trips.bassrock$day),
+                            max(trips.bassrock$day),1))
+
+
+#plot with separate datasets maximal distance to the colony
+glmm.dist.lme.rouzic<-lme(sqrt(Distmaxkm) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.dist.lme.bassrock<-lme(sqrt(Distmaxkm) ~ day, random=~1 | id , data=trips.bassrock)
+
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.dist.lme.bassrock, newdata=newdatbass,level=0)
+grouz <- ref_grid(glmm.dist.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.dist.lme.bassrock, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+
+newdatall<-rbind(newdatbass,newdatrouz)
+emm<-rbind(emmbass,emmrouz)
+
+distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,700,100),
+                       breaks=seq(0,700,100),
+                       expand=c(0.01,0)) + 
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(distgg)
+
+#plot with separate datasets trip duration
+glmm.dur.lme.rouzic<-lme(sqrt(TripDurh) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.dur.lme.bassrock<-lme(sqrt(TripDurh) ~ day, random=~1 | id , data=trips.bassrock)
+
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.dur.lme.rouzic))
+qqline(resid(glmm.dur.lme.rouzic))
+
+qqnorm(resid(glmm.dur.lme.bassrock))
+qqline(resid(glmm.dur.lme.bassrock))
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.dur.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.dur.lme.bassrock, newdata=newdatbass,level=0)
+grouz <- ref_grid(glmm.dur.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.dur.lme.bassrock, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+
+newdatall<-rbind(newdatbass,newdatrouz)
+emm<-rbind(emmbass,emmrouz)
+
+durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Trip Duration (h)",tag="b)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,200),
+                       breaks=seq(0,200,50),
+                       expand=c(0.001,0)) +
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(durgg)
+
+
+
+#plot with separate datasets trip duration
+glmm.path.lme.rouzic<-lme(sqrt(TotalPathkm) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.path.lme.bassrock<-lme(sqrt(TotalPathkm) ~ day, random=~1 | id , data=trips.bassrock)
+
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.path.lme.rouzic))
+qqline(resid(glmm.path.lme.rouzic))
+
+qqnorm(resid(glmm.path.lme.bassrock))
+qqline(resid(glmm.path.lme.bassrock))
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.path.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.path.lme.bassrock, newdata=newdatbass,level=0)
+grouz <- ref_grid(glmm.path.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.path.lme.bassrock, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+
+newdatall<-rbind(newdatbass,newdatrouz)
+emm<-rbind(emmbass,emmrouz)
+
+pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+geom_ribbon(data= emm, 
+            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Total distance travelled (km)",tag="c)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.0001,0.01)) +
+    # scale_y_continuous(limits=c(0,200,50),
+    #                    breaks=seq(0,200,50),
+    #                    expand=c(0.001,0)) +
+    # 
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(pathgg)
+
+
+#plot with separate datasets time spend on land
+glmm.land.lme.rouzic<-lme(sqrt(LandDurh) ~ day, random=~1 | id , data=land.rouzic)
+glmm.land.lme.bassrock<-lme(sqrt(LandDurh) ~ day, random=~1 | id , data=land.bassrock)
+
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.land.lme.rouzic))
+qqline(resid(glmm.land.lme.rouzic))
+
+qqnorm(resid(glmm.land.lme.bassrock))
+qqline(resid(glmm.land.lme.bassrock))
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.land.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.land.lme.bassrock, newdata=newdatbass,level=0)
+grouz <- ref_grid(glmm.land.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.land.lme.bassrock, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+
+newdatall<-rbind(newdatbass,newdatrouz)
+emm<-rbind(emmbass,emmrouz)
+
+durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Time attending the colony (h)",tag="d)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,60),
+                       breaks=seq(0,60,10),
+                       expand=c(0.001,0)) +
+
+  scale_colour_manual(values=mycol,name="Colony") +
+    scale_fill_manual(values=mycol,name="Colony")  
+    
+    
+print(durlandgg)
+
+mylegend<-g_legend(durlandgg)
+
+tiff(here("outputs","Figure_LMM.tif"),width=7000,height=4500,res=600)
+grid.arrange(arrangeGrob(distgg,durgg,pathgg,
+                         durlandgg+ theme(legend.position="none") ,
+                                     ncol=2),
+               mylegend, ncol=2,widths=c(1,0.1)) 
+
+    dev.off()      
 ```

@@ -24,7 +24,6 @@ library(sf)
 library(rgdal)
 library(kableExtra)
 library(conflicted)
-library(adehabitatLT)
 
 source(here("R","trip_functions.R"))
 
@@ -399,7 +398,10 @@ library(lattice)
 library(lmerTest)
 library(sjPlot)
 
-trips.interp.nomigr<-trips_interp_bassrock %>% 
+
+
+trips.interp.nomigr<-loc.interp.bassrock %>% 
+                    trips_summary_ind(.,colony=colo_coord_bassrock) %>% 
   #  dplyr::filter(Distmaxkm < 300) %>% 
     mutate(day=match(format(DateEnd,format="%F"), 
                      unique(format(DateEnd,format="%F"))))
@@ -409,13 +411,14 @@ ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
                                colour=id))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2) + 
+    scale_y_continuous(limits=c(0,800)) +
     ggtitle("Maximal distance to colony over time by individual")
 
 glmm.dist<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
      
 summary(glmm.dist)
  lattice::dotplot(ranef(glmm.dist))$id
- plot_model(glmm.dist,type="eff",terms="day")
+ plot_model(glmm.dist,type="pred",terms="day")
 
  
  #Analysis with trip duration
@@ -429,7 +432,7 @@ glmm.dur<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr
  
 summary(glmm.dur)
 lattice::dotplot(ranef(glmm.dur))$id
- plot_model(glmm.dur,type="eff",terms="day")
+ plot_model(glmm.dur,type="pred",terms="day")
  
  
 #Analysis with total path
@@ -443,7 +446,7 @@ ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
 glmm.path<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
    summary(glmm.path)  
 lattice::dotplot(ranef(glmm.path))$id
-plot_model(glmm.path,type="eff",terms="day")
+plot_model(glmm.path,type="pred",terms="day")
 ```
 
 ## 6- Effect of time on colony attendance (GLMM)
