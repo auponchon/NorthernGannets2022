@@ -4,15 +4,24 @@ format: html
 editor: visual
 ---
 
-## Fitting a HMM
+## 1- Fitting a HMM
+
+Behavioural states are associated with each trip location:
+
+-   state 1: resting on the water
+
+-   state 2: foraging
+
+-   state 3: travelling
 
 ```{r}
 library(moveHMM)
 library(tidyverse)
+library(here)
 
-load("~/Projects/Northern_gannets_Rouzic_2022/GannetsRouzic2022/data/NewlyCreatedData/loc_clean_interp_bassrock.RData")
+load(here("data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
-load("~/Projects/Northern_gannets_Rouzic_2022/GannetsRouzic2022/data/NewlyCreatedData/loc_clean_interp_rouzic.RData")
+load(here("data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 dat<-loc.interp.bassrock %>% 
     rbind(loc.interp.rouzic) %>% 
@@ -66,6 +75,185 @@ kappa0<-c(4.5767898 ,1.2674079, 2.0306179)
   plotPR(mvm)
   plot(mvm)
   
- 
+  
+ dat$states<-viterbi(mvm)
 
+ save(dat, file=here("data","NewlyCreatedData","all_loc_HMM.RData"))
+ 
+```
+
+# 2- Calculating proportions of activities
+
+```{r}
+library(lme4)
+library(lmerTest)
+library(viridis)
+library(gridExtra)
+
+mycol<-mako(2,begin=0.35,end=0.7)
+
+load(here("data","NewlyCreatedData","all_loc_HMM.RData"))
+dat.prop<-dat %>% 
+    as.data.frame(.) %>% 
+    group_by(ID,site,trip.id,states) %>% 
+    summarize(SumAct=sum(difftimemin),
+              Count=n())
+
+tot<-dat %>% 
+    group_by(trip.id) %>% 
+    summarize(Tot=sum(difftimemin),
+               DateEnd= max(datetime))
+
+dat.prop.tot<-dat.prop %>% 
+   left_join(tot,by="trip.id") %>% 
+    mutate(PropAct=SumAct/Tot)
+
+dat.prop.tot$day<-match(format(dat.prop.tot$DateEnd,format="%F"), 
+                     sort(unique(format(dat.prop.tot$DateEnd,format="%F"))))
+daysx<-c("12/08","21/08","31/08","10/09","20/09","30/09","15/10")
+
+#Separate each activity by colony
+rest.rouzic<-dat.prop.tot %>% 
+    dplyr::filter(states==1 & site=="rouzic") 
+rest.bassrock<-dat.prop.tot %>% 
+    dplyr::filter(states==1 & site=="Bass Rock") 
+rest<-rbind(rest.bassrock,rest.rouzic)
+
+forag.rouzic<-dat.prop.tot %>% 
+    dplyr::filter(states==2 & site=="rouzic") 
+forag.bassrock<-dat.prop.tot %>% 
+    dplyr::filter(states==2 & site=="Bass Rock") 
+forag<-rbind(forag.bassrock,forag.rouzic)
+
+fly.rouzic<-dat.prop.tot %>% 
+    dplyr::filter(states==3 & site=="rouzic") 
+fly.bassrock<-dat.prop.tot %>% 
+    dplyr::filter(states==3 & site=="Bass Rock") 
+fly<-rbind(fly.bassrock,fly.rouzic)
+
+#create new dataframes for model predictions
+newdatrouz<-expand.grid(site=unique(rest.rouzic$site),
+                    day=seq(min(rest.rouzic$day),
+                            max(rest.rouzic$day),1))
+
+newdatbass<-expand.grid(site=unique(rest.bassrock$site),
+                    day=seq(min(rest.bassrock$day),
+                            max(rest.bassrock$day),1))
+
+# Model for resting activities
+rest.glmer.rouz<-glmer(PropAct ~ day + (1|ID), family = "binomial", 
+                        data = rest.rouzic) 
+qqnorm(resid(rest.glmer.rouz))
+qqline(resid(rest.glmer.rouz))
+summary(rest.glmer.rouz)
+
+rest.glmer.bass<-glmer(PropAct ~ day + (1|ID), family = "binomial", 
+                        data = rest.bassrock) 
+qqnorm(resid(rest.glmer.bass))
+qqline(resid(rest.glmer.bass))
+summary(rest.glmer.bass)
+
+newdatrouz$predrest<-predict(rest.glmer.rouz,newdata=newdatrouz,
+                                    re.form=NA,type="response")
+newdatbass$predrest<-predict(rest.glmer.bass,newdata=newdatbass,
+                                    re.form=NA, type="response")
+
+#Model for foraging activities
+forag.glmer.rouz<-glmer(PropAct ~ day + (1 | ID), family = "binomial", 
+                        data = forag.rouzic) 
+qqnorm(resid(forag.glmer.rouz))
+qqline(resid(forag.glmer.rouz))
+summary(forag.glmer.rouz)
+
+forag.glmer.bass<-glmer(PropAct ~ day + (1 | ID), family = "binomial", 
+                        data = forag.bassrock) 
+qqnorm(resid(forag.glmer.bass))
+qqline(resid(forag.glmer.bass))
+summary(forag.glmer.bass)
+
+newdatrouz$predfor<-predict(forag.glmer.rouz,newdata=newdatrouz,
+                                    re.form=NA,type="response")
+newdatbass$predfor<-predict(forag.glmer.bass,newdata=newdatbass,
+                                    re.form=NA,type="response")
+
+
+fly.glmer.rouz<-glmer(PropAct ~ day + (1 | ID), family = "binomial", 
+                        data = fly.rouzic)  
+qqnorm(resid(fly.glmer.rouz))
+qqline(resid(fly.glmer.rouz))
+summary(fly.glmer.rouz)
+
+fly.glmer.bass<-glmer(PropAct ~ day + (1 | ID), family = "binomial", 
+                        data = fly.bassrock)  
+qqnorm(resid(fly.glmer.bass))
+qqline(resid(fly.glmer.bass))
+summary(fly.glmer.bass)
+
+newdatrouz$predfly<-predict(fly.glmer.rouz,newdata=newdatrouz,
+                                    re.form=NA,type="response")
+newdatbass$predfly<-predict(fly.glmer.bass,newdata=newdatbass,
+                                    re.form=NA,type="response")
+
+newdatall<-rbind(newdatbass,newdatrouz)
+
+restgg<-ggplot(rest, aes(x=day, y=PropAct ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=predrest),lwd=2) +
+# geom_ribbon(data= data.frame(emm), 
+#             aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+#             alpha=0.4,colour = NA) +
+     labs(y="Proportion of resting",tag="a)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,0.2),
+                       expand=c(0.01,0)) + 
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+print(restgg)
+
+#
+forgg<-ggplot(forag, aes(x=day, y=PropAct ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=predfor),lwd=2) +
+# geom_ribbon(data= data.frame(emm), 
+#             aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+#             alpha=0.4,colour = NA) +
+     labs(y="Proportion of foraging",tag="b)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,0.2),
+                       expand=c(0.01,0)) + 
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+print(forgg)
+
+flygg<-ggplot(fly, aes(x=day, y=PropAct ,colour=site)) + 
+geom_point() +
+ geom_line(data=newdatall,aes(x=day,y=predfly),lwd=2) +
+# geom_ribbon(data= data.frame(emm), 
+#             aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+#             alpha=0.4,colour = NA) +
+     labs(y="Proportion of flying",tag="c)",x="") +
+    scale_x_continuous(limits=c(0,62),
+                       labels=daysx,
+                       breaks=seq(1,61,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,0.2),
+                       expand=c(0.01,0)) + 
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+print(flygg)
 ```

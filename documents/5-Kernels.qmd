@@ -7,8 +7,6 @@ editor: visual
 
 # Calculating kernels
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
 
 library(here)
@@ -35,7 +33,7 @@ coordinates(loc.interp.bassrock)<-c("long","lat")
 proj4string(loc.interp.bassrock) <- wgscrs
 bassrock_proj<-spTransform(loc.interp.bassrock, projcrs)
 
-KUD.bassrock<- kernelUD(bassrock_proj[,"site"],same4all=T,h=10000,grid=1000)
+KUD.bassrock<- kernelUD(bassrock_proj[,"site"],same4all=T,h="href",grid=1000)
     KUDvol.bassrock <- getvolumeUD(KUD.bassrock)
     ver90.bassrock<-getverticeshr(KUDvol.bassrock ,90)
     ver50.bassrock<-getverticeshr(KUDvol.bassrock ,50)
@@ -44,7 +42,7 @@ coordinates(loc.interp.rouzic)<-c("long","lat")
 proj4string(loc.interp.rouzic) <- wgscrs
 rouzic_proj<-spTransform(loc.interp.rouzic, projcrs)
 
-KUD.rouzic<- kernelUD(rouzic_proj[,"site"],h=10000,same4all=T,grid=1000)
+KUD.rouzic<- kernelUD(rouzic_proj[,"site"],h="href",same4all=T,grid=1000)
     KUDvol.rouzic <- getvolumeUD(KUD.rouzic)
     ver90.rouzic<-getverticeshr(KUDvol.rouzic ,90)
     ver50.rouzic<-getverticeshr(KUDvol.rouzic ,50)
@@ -59,4 +57,44 @@ plot(ver90.rouzic,col=mycol[4], border=mycol[4],main="Kernel Rouzic")
 plot(ver50.rouzic,col=mycol[3], border=mycol[3],add=T)
 plot(land_proj,col="grey90",add=T)
 
+```
+
+# Representing tracks over time
+
+```{r}
+library("sftrack")
+
+land_proj_sf<-st_as_sf(land_proj)
+maxdate<-loc.interp.bassrock %>% 
+    mutate(day=format(datetime,format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_bass <- loc.interp.bassrock  %>% 
+    left_join(maxdate,by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+
+group = c(id='id',Date='Date')
+time_col = 'datetime'
+
+new_sftraj <- as_sftraj(sf_locs_bass, group = group, time = time_col) 
+
+# sf_lines_bass <- sf_locs_bass %>% 
+#   dplyr::arrange(trip.id,datetime) %>%
+#   sf::st_geometry() %>%
+#   sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs_bass$id))) %>%
+#   sf::st_cast("MULTILINESTRING") %>%
+#   sf::st_sf(ID = as.factor(unique(sf_locs_bass$id))
+#   sf::st_transform(., projcrs) 
+    
+
+bassgg<-ggplot()+
+     geom_sf(data=land_proj_sf,fill="grey90",size=0.2) +   
+     geom_sftrack(data = new_sftraj,show.legend=F) +
+     scale_color_manual(name = "Date",
+                       values = magma (length(unique(sf_locs_bass$day)))) 
+print(bassgg)
 ```
