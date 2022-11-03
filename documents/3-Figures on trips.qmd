@@ -255,7 +255,8 @@ print(durlandgg)
 
 mylegend<-g_legend(durlandgg)
 
-tiff(here("outputs","Figure_LMM.tif"),width=7000,height=4500,res=600)
+tiff(here("outputs","Figure_LMM.tif"),width=7000,height=4500,res=600,
+     compression="lzw")
 grid.arrange(arrangeGrob(distgg,durgg,pathgg,
                          durlandgg+ theme(legend.position="none") ,
                                      ncol=2),

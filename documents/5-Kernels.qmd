@@ -16,8 +16,13 @@ library(gridExtra)
 library(adehabitatHR)
 library(sf)
 library(rgdal)
+library(ggspatial)
+library(extrafont)
 
 source(here("R","trip_functions.R"))
+# font_add_google(name="Rokkitt",family="rokkitt")
+# showtext_auto()
+
 
 #bassrock for trips
 load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
@@ -59,42 +64,158 @@ plot(land_proj,col="grey90",add=T)
 
 ```
 
-# Representing tracks over time
+# Representing tracks over time for Bass Rock
 
 ```{r}
-library("sftrack")
 
-land_proj_sf<-st_as_sf(land_proj)
-maxdate<-loc.interp.bassrock %>% 
+#limits for Bass Rock
+# longmnbr=-5
+# longmxbr=8
+# latmnbr=53
+# latmxbr=59.5
+
+#calculate bottom left and top right projected coordinates
+br<-data.frame(long=c(-5,9),lat=c(53,59.5)) %>%
+    sf::st_as_sf(., coords = c("long","lat")) %>%
+    sf::st_set_crs(wgscrs) %>%
+    sf::st_transform(., projcrs)
+
+longmnbr=365786
+longmxbr=1176972
+latmnbr=5874142
+latmxbr=6647326
+
+coord_bassrock<-colo_coord_bassrock %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+land_proj_bass<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnbr, ymin = latmnbr, 
+    #              xmax =longmxbr, ymax =latmxbr)) %>% 
+   sf::st_transform(., projcrs)
+ 
+maxdatebass<-loc.interp.bassrock %>% 
     mutate(day=format(datetime,format="%d/%m")) %>% 
     group_by(trip.id) %>% 
     summarize(Date=max(day))
 
 sf_locs_bass <- loc.interp.bassrock  %>% 
-    left_join(maxdate,by="trip.id") %>% 
+    left_join(maxdatebass,by="trip.id") %>% 
     sf::st_as_sf(., coords = c("long","lat")) %>% 
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs) 
 
+sf_lines_bass <- sf_locs_bass %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING")  %>% 
+mutate(Date=as.Date(Date,format="%d/%m"))  %>% 
+    arrange(Date)
 
-group = c(id='id',Date='Date')
-time_col = 'datetime'
-
-new_sftraj <- as_sftraj(sf_locs_bass, group = group, time = time_col) 
-
-# sf_lines_bass <- sf_locs_bass %>% 
-#   dplyr::arrange(trip.id,datetime) %>%
-#   sf::st_geometry() %>%
-#   sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs_bass$id))) %>%
-#   sf::st_cast("MULTILINESTRING") %>%
-#   sf::st_sf(ID = as.factor(unique(sf_locs_bass$id))
-#   sf::st_transform(., projcrs) 
-    
 
 bassgg<-ggplot()+
-     geom_sf(data=land_proj_sf,fill="grey90",size=0.2) +   
-     geom_sftrack(data = new_sftraj,show.legend=F) +
-     scale_color_manual(name = "Date",
-                       values = magma (length(unique(sf_locs_bass$day)))) 
+     geom_sf(data=land_proj_bass,fill="grey90",size=0.2) +   
+     geom_sf(data = sf_lines_bass, mapping=aes(colour=Date),alpha=0.7) +
+     geom_sf(data = coord_bassrock,shape=23, colour="black",fill="yellow", size=3) + 
+     coord_sf(xlim = c(longmnbr,longmxbr), ylim=c(latmnbr, latmxbr),  expand = FALSE) +
+     labs(tag="a)") +
+     scale_colour_gradientn(colours=magma(length(unique(sf_lines_bass$Date))),
+                            breaks = seq.Date(min(sf_lines_bass$Date),
+                                       max(sf_lines_bass$Date),length.out=4),
+                         labels = c("11/08", "31/08" ,"21/09" ,"12/10")) +
+    annotation_scale(location = "br", width_hint = 0.3,
+                     pad_x = unit(0.7, "cm"),bar_cols = "black") +
+    annotation_north_arrow(location = "br", which_north = "true",
+    style = ggspatial::north_arrow_nautical(), pad_y = unit(0.8, "cm")) +
+    theme_bw() +
+    theme( plot.margin = margin(0,0,0,0))
+
 print(bassgg)
+
+write_sf(sf_lines_bass, dsn=here("data","NewlyCreatedData","shapefiles"),
+         driver="ESRI Shapefile",
+         layer="tracks_bassrock", append=F, delete_layer=T)
+```
+
+# Representing tracks over time for Rouzic
+
+```{r}
+
+#limits for Rouzic
+# longmnr=-6
+# longmxr=0
+# latmnr=47.5
+# latmxr=51
+
+#calculate bttom left and top right projected coordinates
+# br<-data.frame(long=c(-6,0),lat=c(47.5,51)) %>% 
+#     sf::st_as_sf(., coords = c("long","lat")) %>% 
+#     sf::st_set_crs(wgscrs) %>% 
+#     sf::st_transform(., projcrs)
+
+longmnr=274068.6
+longmxr=710488.9
+latmnr=5265093
+latmxr=5654109
+
+coord_rouzic<-colo_coord_rouzic %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+
+land_proj_rouz<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnr, ymin = latmnr, 
+    #              xmax =longmxr, ymax =latmxr)) %>% 
+    sf::st_transform(., projcrs)   
+
+maxdaterouz<-loc.interp.rouzic %>% 
+    mutate(day=format(datetime,format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_rouz<- loc.interp.rouzic  %>% 
+    left_join(maxdaterouz,by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+sf_lines_rouz <- sf_locs_rouz %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING") %>% 
+  mutate(Date=as.Date(Date,format="%d/%m"))  %>% 
+    arrange(Date)
+
+rouzgg<-ggplot()+
+     geom_sf(data = sf_lines_rouz, mapping=aes(colour=Date),alpha=0.7) +
+     geom_sf(data=land_proj_rouz,fill="grey90",size=0.2) +   
+     geom_sf(data = coord_rouzic,shape=23, colour="black",fill="yellow", size=3) + 
+     coord_sf(xlim = c(longmnr,longmxr), ylim=c(latmnr, latmxr),  expand = FALSE) +
+    labs(tag="b)") +
+     scale_colour_gradientn(colours=viridis(length(unique(sf_lines_rouz$Date))),
+                            breaks = seq.Date(min(sf_lines_rouz$Date),
+                                       max(sf_lines_rouz$Date),length.out=4),
+                         labels = c("24/08", "04/09" ,"16/09" ,"28/09")) +
+      annotation_scale(location = "bl", width_hint = 0.3,
+                     pad_x = unit(0.3, "cm"), bar_cols = "black") +
+    annotation_north_arrow(location = "br", which_north = "true",
+    style = ggspatial::north_arrow_nautical(), pad_y = unit(0.3, "cm")) +
+    theme_bw() +
+    theme( plot.margin = margin(0,0,0,0))
+print(rouzgg)
+
+write_sf(sf_lines_rouz, dsn=here("data","NewlyCreatedData","shapefiles"),
+         driver="ESRI Shapefile",
+         layer="tracks_rouzic", append=F, delete_layer=T)
+
+
+tiff(here("outputs","Figure_maps.tif"),width=7000,height=4000,res=600,
+     compression="lzw")
+grid.arrange(bassgg,rouzgg,ncol=2,widths=c(1,1.1)) 
+
+    dev.off()     
 ```
