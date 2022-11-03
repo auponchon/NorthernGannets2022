@@ -143,8 +143,8 @@ load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
 # grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips_rouzic<-trips_summary_ind(rawLoc.rouzic)
-raw_land_rouzic<-land_summary_ind(rawLoc.rouzic)
+raw_trips_rouzic<-trips_summary_ind(rawLoc.rouzic,colony=colo_coord_rouzic)
+raw_land_rouzic<-land_summary_ind(rawLoc.rouzic,colony=colo_coord_rouzic)
 
 # write.csv(raw_trips_rouzic,file=here("data","NewlyCreatedData","raw_trips_summary1.csv"),
 #           row.names = F,quote=F)
@@ -368,7 +368,7 @@ At-sea trips retained are at least \>1h long, \>1km from the colony and have mor
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 clean_trips_interp_rouzic<-loc.interp.rouzic %>% 
-                    trips_summary_ind(.)
+                    trips_summary_ind(.,colony=colo_coord_rouzic)
                     # dplyr::filter(Distmaxkm < 300)
 
 ##plot trip and land periods

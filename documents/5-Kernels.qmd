@@ -111,7 +111,7 @@ sf_lines_bass <- sf_locs_bass %>%
   group_by(Date,trip.id) %>%
   summarise(do_union = FALSE) %>%
   st_cast("LINESTRING")  %>% 
-mutate(Date=as.Date(Date,format="%d/%m"))  %>% 
+  mutate(Date=as.Date(Date,format="%d/%m"))  %>% 
     arrange(Date)
 
 

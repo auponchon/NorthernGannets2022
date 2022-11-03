@@ -77,9 +77,11 @@ newdatbass<-expand.grid(site=unique(trips.bassrock$site),
 
 
 #plot with separate datasets maximal distance to the colony
-glmm.dist.lme.rouzic<-lme(sqrt(Distmaxkm) ~ day, random=~1 | id , data=trips.rouzic)
-glmm.dist.lme.bassrock<-lme(sqrt(Distmaxkm) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.dist.lme.rouzic<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.dist.lme.bassrock<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.bassrock)
 
+summary(glmm.dist.lme.rouzic)
+summary(glmm.dist.lme.bassrock)
 
 #predict fitted values and CI
 newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,level=0)
@@ -96,9 +98,9 @@ emm<-rbind(emmbass,emmrouz)
 
 distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
 geom_point() +
- geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
-            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
     scale_x_continuous(limits=c(0,62),
@@ -116,8 +118,11 @@ geom_ribbon(data= data.frame(emm),
 print(distgg)
 
 #plot with separate datasets trip duration
-glmm.dur.lme.rouzic<-lme(sqrt(TripDurh) ~ day, random=~1 | id , data=trips.rouzic)
-glmm.dur.lme.bassrock<-lme(sqrt(TripDurh) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.dur.lme.rouzic<-lme(log(TripDurh) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.dur.lme.bassrock<-lme(log(TripDurh) ~ day, random=~1 | id , data=trips.bassrock)
+
+summary(glmm.dur.lme.rouzic)
+summary(glmm.dur.lme.bassrock)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.dur.lme.rouzic))
@@ -141,9 +146,9 @@ emm<-rbind(emmbass,emmrouz)
 
 durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
 geom_point() +
- geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
-            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Trip Duration (h)",tag="b)",x="") +
     scale_x_continuous(limits=c(0,62),
@@ -163,8 +168,11 @@ print(durgg)
 
 
 #plot with separate datasets trip duration
-glmm.path.lme.rouzic<-lme(sqrt(TotalPathkm) ~ day, random=~1 | id , data=trips.rouzic)
-glmm.path.lme.bassrock<-lme(sqrt(TotalPathkm) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.path.lme.rouzic<-lme(log(TotalPathkm) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.path.lme.bassrock<-lme(log(TotalPathkm) ~ day, random=~1 | id , data=trips.bassrock)
+
+summary(glmm.path.lme.rouzic)
+summary(glmm.path.lme.bassrock)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.path.lme.rouzic))
@@ -188,9 +196,9 @@ emm<-rbind(emmbass,emmrouz)
 
 pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
 geom_point() +
- geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= emm, 
-            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Total distance travelled (km)",tag="c)",x="") +
     scale_x_continuous(limits=c(0,62),
@@ -209,8 +217,11 @@ print(pathgg)
 
 
 #plot with separate datasets time spend on land
-glmm.land.lme.rouzic<-lme(sqrt(LandDurh) ~ day, random=~1 | id , data=land.rouzic)
-glmm.land.lme.bassrock<-lme(sqrt(LandDurh) ~ day, random=~1 | id , data=land.bassrock)
+glmm.land.lme.rouzic<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.rouzic)
+glmm.land.lme.bassrock<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.bassrock)
+
+summary(glmm.land.lme.rouzic)
+summary(glmm.land.lme.bassrock)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.land.lme.rouzic))
@@ -234,9 +245,9 @@ emm<-rbind(emmbass,emmrouz)
 
 durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
 geom_point() +
- geom_line(data=newdatall,aes(x=day,y=pred^2),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
-            aes(ymin= lower.CL^2, ymax= upper.CL^2, y= NULL,fill=site), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Time attending the colony (h)",tag="d)",x="") +
     scale_x_continuous(limits=c(0,62),
