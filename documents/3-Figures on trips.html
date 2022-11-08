@@ -59,233 +59,260 @@ ul.task-list{list-style: none;}
 <p>Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.rouzic 
-       AIC      BIC    logLik
-  604.5553 618.7204 -298.2776
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(Distmaxkm) ~ day + (1 | id)
+   Data: trips.rouzic
+
+REML criterion at convergence: 596.6
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.7237 -0.5216  0.0681  0.7104  1.9221 
 
 Random effects:
- Formula: ~1 | id
-        (Intercept)  Residual
-StdDev:    0.173446 0.7440512
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.03008  0.1734  
+ Residual             0.55361  0.7441  
+Number of obs: 257, groups:  id, 13
 
-Fixed effects:  log(Distmaxkm) ~ day 
-                Value  Std.Error  DF   t-value p-value
-(Intercept)  3.943329 0.16694622 243 23.620355  0.0000
-day         -0.002975 0.00563791 243 -0.527622  0.5982
- Correlation: 
+Fixed effects:
+              Estimate Std. Error         df t value Pr(&gt;|t|)    
+(Intercept)   3.943329   0.166946 140.190546  23.620   &lt;2e-16 ***
+day          -0.002975   0.005638 229.319522  -0.528    0.598    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
     (Intr)
-day -0.912
-
-Standardized Within-Group Residuals:
-        Min          Q1         Med          Q3         Max 
--4.72368617 -0.52155092  0.06805548  0.71036531  1.92208577 
-
-Number of Observations: 257
-Number of Groups: 13 </code></pre>
+day -0.912</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.bassrock 
-       AIC      BIC    logLik
-  1048.421 1063.341 -520.2103
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(Distmaxkm) ~ day + (1 | id)
+   Data: trips.bassrock
+
+REML criterion at convergence: 1040.6
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.0112 -0.4350  0.2124  0.6514  1.7903 
 
 Random effects:
- Formula: ~1 | id
-        (Intercept) Residual
-StdDev:   0.2966162 1.256875
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.08786  0.2964  
+ Residual             1.58060  1.2572  
+Number of obs: 310, groups:  id, 10
 
-Fixed effects:  log(Distmaxkm) ~ day 
-               Value  Std.Error  DF   t-value p-value
-(Intercept) 3.776684 0.16304568 299 23.163350  0.0000
-day         0.009607 0.00464098 299  2.069985  0.0393
- Correlation: 
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 3.782e+00  1.626e-01 2.966e+01  23.257   &lt;2e-16 ***
+day         9.349e-03  4.603e-03 3.072e+02   2.031   0.0431 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
     (Intr)
-day -0.668
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--3.0131122 -0.4334195  0.2123726  0.6662521  1.7859993 
-
-Number of Observations: 310
-Number of Groups: 10 </code></pre>
+day -0.666</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.rouzic 
-       AIC      BIC    logLik
-  654.3254 668.4905 -323.1627
-
-Random effects:
- Formula: ~1 | id
-        (Intercept)  Residual
-StdDev:    0.217521 0.8176989
-
-Fixed effects:  log(TripDurh) ~ day 
-                Value  Std.Error  DF   t-value p-value
-(Intercept) 2.2857775 0.18646944 243 12.258188  0.0000
-day         0.0107906 0.00624166 243  1.728807  0.0851
- Correlation: 
-    (Intr)
-day -0.9  
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--3.0683256 -0.6025134  0.1749545  0.6403213  2.6184275 
-
-Number of Observations: 257
-Number of Groups: 13 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.bassrock 
-       AIC      BIC    logLik
-  959.8368 974.7572 -475.9184
-
-Random effects:
- Formula: ~1 | id
-        (Intercept) Residual
-StdDev:    0.287385 1.086294
-
-Fixed effects:  log(TripDurh) ~ day 
-                Value  Std.Error  DF  t-value p-value
-(Intercept) 2.0986652 0.14710116 299 14.26682  0.0000
-day         0.0133005 0.00402116 299  3.30763  0.0011
- Correlation: 
-    (Intr)
-day -0.639
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--2.6929015 -0.6659318  0.1877658  0.7264425  2.0606535 
-
-Number of Observations: 310
-Number of Groups: 10 </code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TripDurh) ~ day + (1 | id)
+   Data: trips.rouzic
+
+REML criterion at convergence: 646.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.0683 -0.6025  0.1749  0.6403  2.6184 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.04732  0.2175  
+ Residual             0.66863  0.8177  
+Number of obs: 257, groups:  id, 13
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 2.286e+00  1.865e-01 1.306e+02  12.258   &lt;2e-16 ***
+day         1.079e-02  6.242e-03 2.383e+02   1.729   0.0851 .  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.900</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TripDurh) ~ day + (1 | id)
+   Data: trips.bassrock
+
+REML criterion at convergence: 952
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.6884 -0.6649  0.1842  0.7278  2.0627 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.08247  0.2872  
+ Residual             1.18050  1.0865  
+Number of obs: 310, groups:  id, 10
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 2.102e+00  1.467e-01 2.608e+01   14.32 7.15e-14 ***
+day         1.312e-02  3.988e-03 3.078e+02    3.29  0.00112 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.637</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.rouzic 
-       AIC      BIC    logLik
-  639.9885 654.1535 -315.9942
-
-Random effects:
- Formula: ~1 | id
-        (Intercept)  Residual
-StdDev:   0.1407559 0.8020538
-
-Fixed effects:  log(TotalPathkm) ~ day 
-               Value  Std.Error  DF   t-value p-value
-(Intercept) 4.837828 0.17513218 243 27.623866  0.0000
-day         0.000018 0.00598222 243  0.003021  0.9976
- Correlation: 
-    (Intr)
-day -0.929
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--4.6175017 -0.6182907  0.1325411  0.6889120  2.0643586 
-
-Number of Observations: 257
-Number of Groups: 13 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: trips.bassrock 
-       AIC      BIC    logLik
-  1074.144 1089.064 -533.0718
-
-Random effects:
- Formula: ~1 | id
-        (Intercept) Residual
-StdDev:   0.3181109 1.309815
-
-Fixed effects:  log(TotalPathkm) ~ day 
-               Value  Std.Error  DF   t-value p-value
-(Intercept) 4.618695 0.17166366 299 26.905487  0.0000
-day         0.011478 0.00483954 299  2.371661  0.0183
- Correlation: 
-    (Intr)
-day -0.661
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--3.0452128 -0.4308802  0.1820992  0.6939301  1.7645819 
-
-Number of Observations: 310
-Number of Groups: 10 </code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TotalPathkm) ~ day + (1 | id)
+   Data: trips.rouzic
+
+REML criterion at convergence: 632
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.6175 -0.6183  0.1325  0.6889  2.0644 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.01981  0.1408  
+ Residual             0.64329  0.8021  
+Number of obs: 257, groups:  id, 13
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 4.838e+00  1.751e-01 1.420e+02  27.624   &lt;2e-16 ***
+day         1.807e-05  5.982e-03 2.006e+02   0.003    0.998    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.929</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TotalPathkm) ~ day + (1 | id)
+   Data: trips.bassrock
+
+REML criterion at convergence: 1066.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.0433 -0.4320  0.1829  0.6912  1.7687 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.101    0.3179  
+ Residual             1.717    1.3102  
+Number of obs: 310, groups:  id, 10
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept)   4.62392    0.17122  28.88756  27.006   &lt;2e-16 ***
+day           0.01122    0.00480 307.38784   2.338     0.02 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.659</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-5.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: land.rouzic 
-       AIC     BIC    logLik
-  617.5749 631.379 -304.7874
-
-Random effects:
- Formula: ~1 | id
-        (Intercept)  Residual
-StdDev:   0.2689613 0.8444802
-
-Fixed effects:  log(LandDurh) ~ day 
-                 Value  Std.Error  DF   t-value p-value
-(Intercept)  2.3842325 0.20452612 220 11.657349  0.0000
-day         -0.0150862 0.00705857 220 -2.137291  0.0337
- Correlation: 
-    (Intr)
-day -0.888
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--2.3242734 -0.6581620  0.0721326  0.7965717  2.0784784 
-
-Number of Observations: 235
-Number of Groups: 14 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Linear mixed-effects model fit by REML
-  Data: land.bassrock 
-       AIC      BIC    logLik
-  806.2932 821.0681 -399.1466
-
-Random effects:
- Formula: ~1 | id
-        (Intercept)  Residual
-StdDev:   0.1452516 0.8942213
-
-Fixed effects:  log(LandDurh) ~ day 
-                 Value  Std.Error  DF   t-value p-value
-(Intercept)  2.5177290 0.10762611 288 23.393292  0.0000
-day         -0.0025614 0.00345753 288 -0.740827  0.4594
- Correlation: 
-    (Intr)
-day -0.754
-
-Standardized Within-Group Residuals:
-       Min         Q1        Med         Q3        Max 
--2.9777930 -0.5954097  0.3394039  0.6776878  1.8466928 
-
-Number of Observations: 299
-Number of Groups: 10 </code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-6.png" class="img-fluid" width="672"></p>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(LandDurh) ~ day + (1 | id)
+   Data: land.rouzic
+
+REML criterion at convergence: 609.6
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-2.32427 -0.65816  0.07213  0.79657  2.07848 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.07234  0.2690  
+ Residual             0.71315  0.8445  
+Number of obs: 235, groups:  id, 14
+
+Fixed effects:
+              Estimate Std. Error         df t value Pr(&gt;|t|)    
+(Intercept)   2.384232   0.204526 150.267921  11.657   &lt;2e-16 ***
+day          -0.015086   0.007059 232.964871  -2.137   0.0336 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.888</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(LandDurh) ~ day + (1 | id)
+   Data: land.bassrock
+
+REML criterion at convergence: 798.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9794 -0.5952  0.3420  0.6779  1.8442 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.02102  0.1450  
+ Residual             0.79957  0.8942  
+Number of obs: 299, groups:  id, 10
+
+Fixed effects:
+              Estimate Std. Error         df t value Pr(&gt;|t|)    
+(Intercept)   2.519547   0.107411  47.792388  23.457   &lt;2e-16 ***
+day          -0.002636   0.003443 296.875661  -0.766    0.445    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.754</code></pre>
+</div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-8.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>png 

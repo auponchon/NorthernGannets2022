@@ -412,8 +412,7 @@ library(lmerTest)
 library(sjPlot)
 
 trips.interp.nomigr<-clean_trips_interp_rouzic %>% 
-    mutate(day=match(format(DateEnd,format="%F"), 
-                     unique(format(DateEnd,format="%F"))))
+    mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
 
 #Analysis with maximal distance
 ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
@@ -469,8 +468,7 @@ According to GLMM, no effect of day on duration of periods on land at the colony
 
 lands<-raw_land_rouzic %>% 
     dplyr::filter(LandDurh > 1) %>% 
-    mutate(day=match(format(DateEnd,format="%F"), 
-                     unique(format(DateEnd,format="%F"))))
+    mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
 
 #Analysis with maximal distance
 ggplot(lands,aes(x=day,y=LandDurh,

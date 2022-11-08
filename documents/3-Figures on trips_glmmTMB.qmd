@@ -1,0 +1,309 @@
+---
+title: "3-Trips characteristics"
+format: html
+editor: visual
+---
+
+## Plots with LME predictions
+
+Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+library(here)
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(gridExtra)
+library(nlme)
+library(emmeans)
+library(glmmTMB)
+
+source(here("R","trip_functions.R"))
+
+#bassrock for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
+trips.bassrock<-trips_summary_ind(loc.interp.bassrock,colony=colo_coord_bassrock)
+#bassrock for nest attendance
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
+land.bassrock<-rawLoc.bassrock %>% 
+    land_summary_ind(.,colony=colo_coord_bassrock) %>% 
+    dplyr::filter(LandDurh > 1) 
+
+#rouzic for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+trips.rouzic<-trips_summary_ind(loc.interp.rouzic,colony=colo_coord_rouzic)
+#rouzic for nest attendance
+load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+land.rouzic<-rawLoc.rouzic %>% 
+    land_summary_ind(.,colony=colo_coord_rouzic) %>% 
+    dplyr::filter(LandDurh > 1) 
+ 
+ trips<-trips.bassrock %>% 
+        rbind(trips.rouzic) %>% 
+       mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
+ 
+trips.bassrock<-trips %>% 
+    dplyr::filter(site=="Bass Rock")
+trips.rouzic<-trips %>% 
+     dplyr::filter(site=="Rouzic")
+
+
+lands<-land.bassrock %>% 
+    rbind(land.rouzic ) %>% 
+    mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
+
+land.bassrock<-lands %>% 
+    dplyr::filter(site=="Bass Rock")
+land.rouzic<-lands %>% 
+     dplyr::filter(site=="Rouzic")
+
+
+mycol<-mako(2,begin=0.35,end=0.7)
+
+
+daysx<-c("10/08","20/08","30/08","09/09","19/09","29/09","09/10")
+newdatrouz<-expand.grid(site=unique(trips.rouzic$site),
+                    day=seq(min(trips.rouzic$day),
+                            max(trips.rouzic$day),1),
+                    id=NA)
+
+newdatbass<-expand.grid(site=unique(trips.bassrock$site),
+                    day=seq(min(trips.bassrock$day),
+                            max(trips.bassrock$day),1),
+                    id=NA)
+
+
+#plot with separate datasets maximal distance to the colony
+glmm.dist.lme.rouzic<-glmmTMB(Distmaxkm ~ day + (1 | id) , data=trips.rouzic,
+                          family=Gamma(link="log"))
+
+glmm.dist.lme.bassrock<-glmmTMB(Distmaxkm ~ day + (1 | id) , data=trips.bassrock,
+                          family=Gamma(link="log"))
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.dist.lme.rouzic))
+qqline(resid(glmm.dist.lme.rouzic))
+qqnorm(resid(glmm.dist.lme.bassrock))
+qqline(resid(glmm.dist.lme.bassrock))
+
+summary(glmm.dist.lme.rouzic)
+summary(glmm.dist.lme.bassrock)
+
+#predict fitted values and CI
+newdatrouz$predDist<-predict(glmm.dist.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$fit
+newdatrouz$predDistSE<-predict(glmm.dist.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$se.fit
+newdatbass$predDist<-predict(glmm.dist.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$fit
+newdatbass$predDistSE<-predict(glmm.dist.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$se.fit
+
+#plot with separate datasets trip duration
+
+glmm.dur.lme.rouzic<-glmmTMB(TripDurh ~ day + (1 | id) , data=trips.rouzic,
+                          family=Gamma(link="log"))
+
+glmm.dur.lme.bassrock<-glmmTMB(TripDurh ~ day + (1 | id) , data=trips.bassrock,
+                          family=Gamma(link="log"))
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.dur.lme.rouzic))
+qqline(resid(glmm.dur.lme.rouzic))
+
+qqnorm(resid(glmm.dur.lme.bassrock))
+qqline(resid(glmm.dur.lme.bassrock))
+
+
+summary(glmm.dur.lme.rouzic)
+summary(glmm.dur.lme.bassrock)
+
+#predict fitted values and CI
+newdatrouz$predDur<-predict(glmm.dur.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$fit
+newdatrouz$predDurSE<-predict(glmm.dur.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$se.fit
+newdatbass$predDur<-predict(glmm.dur.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$fit
+newdatbass$predDurSE<-predict(glmm.dur.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$se.fit
+
+
+glmm.path.lme.rouzic<-glmmTMB(TotalPathkm ~ day + (1 | id) , data=trips.rouzic,
+                          family=Gamma(link="log"))
+
+
+glmm.path.lme.bassrock<-glmmTMB(TotalPathkm ~ day + (1 | id) , data=trips.bassrock,
+                          family=Gamma(link="log"))
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.path.lme.rouzic))
+qqline(resid(glmm.path.lme.rouzic))
+
+qqnorm(resid(glmm.dur.lme.bassrock))
+qqline(resid(glmm.dur.lme.bassrock))
+
+
+summary(glmm.path.lme.bassrock)
+summary(glmm.path.lme.bassrock)
+
+#predict fitted values and CI
+newdatrouz$predPath<-predict(glmm.path.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$fit
+newdatrouz$predPathSE<-predict(glmm.path.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$se.fit
+newdatbass$predPath<-predict(glmm.path.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$fit
+newdatbass$predPathSE<-predict(glmm.path.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$se.fit
+
+
+#plot with separate datasets time spend on land
+glmm.land.lme.rouzic<-glmmTMB(LandDurh ~ day + (1 | id) , data=land.rouzic,
+                          family=Gamma(link="log"))
+
+glmm.land.lme.bassrock<-glmmTMB(LandDurh ~ day + (1 | id) , data=land.bassrock,
+                          family=Gamma(link="log"))
+
+summary(glmm.land.lme.rouzic)
+summary(glmm.land.lme.bassrock)
+
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.land.lme.rouzic))
+qqline(resid(glmm.land.lme.rouzic))
+
+qqnorm(resid(glmm.land.lme.bassrock))
+qqline(resid(glmm.land.lme.bassrock))
+
+#predict fitted values and CI
+#predict fitted values and CI
+newdatrouz$predLand<-predict(glmm.land.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$fit
+newdatrouz$predLandSE<-predict(glmm.land.lme.rouzic,se.fit=T, re.form=NA,
+                                     newdata=newdatrouz,
+                                    type="response")$se.fit
+newdatbass$predLand<-predict(glmm.land.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$fit
+newdatbass$predLandSE<-predict(glmm.land.lme.bassrock,se.fit=T, re.form=NA,
+                                     newdata=newdatbass,
+                                    type="response")$se.fit
+
+newdatall<-rbind(newdatbass,newdatrouz)
+
+distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
+geom_point(alpha=0.4) +
+ geom_line(data=newdatall,aes(x=day,y=predDist),lwd=1.5) +
+geom_ribbon(data= newdatall, 
+            aes(ymin= predDist- predDistSE, ymax= predDist + predDistSE,
+                y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
+    scale_x_continuous(limits=c(0,64),
+                       labels=daysx,
+                       breaks=seq(0,64,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,700,100),
+                       breaks=seq(0,700,100),
+                       expand=c(0.01,0)) + 
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(distgg)
+
+
+
+durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
+geom_point(alpha=0.4) +
+ geom_line(data=newdatall,aes(x=day,y=predDur),lwd=1.5) +
+geom_ribbon(data= newdatall, 
+            aes(ymin= predDur - predDurSE, ymax= predDur + predDurSE, y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Trip Duration (h)",tag="b)",x="") +
+    scale_x_continuous(limits=c(0,64),
+                       labels=daysx,
+                       breaks=seq(0,64,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,200),
+                       breaks=seq(0,200,50),
+                       expand=c(0.001,0)) +
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(durgg)
+
+
+pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
+geom_point(alpha=0.4) +
+ geom_line(data=newdatall,aes(x=day,y=predPath),lwd=1.2) +
+geom_ribbon(data= newdatall, 
+            aes(ymin= predPath-predPathSE, ymax= predPath +predPathSE, 
+                y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Total distance travelled (km)",tag="c)",x="") +
+    scale_x_continuous(limits=c(0,64),
+                       labels=daysx,
+                       breaks=seq(0,64,10),
+                       expand=c(0.0001,0.01)) +
+    # scale_y_continuous(limits=c(0,200,50),
+    #                    breaks=seq(0,200,50),
+    #                    expand=c(0.001,0)) +
+    # 
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme(legend.position="none") 
+    
+print(pathgg)
+
+
+
+durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
+geom_point(alpha=0.4) +
+ geom_line(data=newdatall,aes(x=day,y=predLand),lwd=1.5) +
+geom_ribbon(data= newdatall, 
+            aes(ymin= predLand-predLandSE, ymax= predLand+predLandSE, 
+                y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Time attending the colony (h)",tag="d)",x="") +
+    scale_x_continuous(limits=c(0,64),
+                       labels=daysx,
+                       breaks=seq(0,64,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,60),
+                       breaks=seq(0,60,10),
+                       expand=c(0.001,0)) +
+  scale_colour_manual(values=mycol,name="Colony") +
+    scale_fill_manual(values=mycol,name="Colony")  
+    
+    
+print(durlandgg)
+
+mylegend<-g_legend(durlandgg)
+
+tiff(here("outputs","Figure_LMMTMB_trips.tif"),width=7000,height=4000,res=600,
+     compression="lzw")
+grid.arrange(arrangeGrob(distgg,durgg,pathgg,
+                         durlandgg+ theme(legend.position="none") ,
+                                     ncol=2),
+               mylegend, ncol=2,widths=c(1,0.1)) 
+
+    dev.off()      
+```

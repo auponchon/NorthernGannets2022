@@ -43,8 +43,7 @@ land.rouzic<-rawLoc.rouzic %>%
  
  trips<-trips.bassrock %>% 
         rbind(trips.rouzic) %>% 
-       mutate(day=match(format(DateEnd,format="%F"), 
-                     sort(unique(format(DateEnd,format="%F")))))
+       mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
  
 trips.bassrock<-trips %>% 
     dplyr::filter(site=="Bass Rock")
@@ -54,8 +53,7 @@ trips.rouzic<-trips %>%
 
 lands<-land.bassrock %>% 
     rbind(land.rouzic ) %>% 
-    mutate(day=match(format(DateEnd,format="%F"), 
-                     sort(unique(format(DateEnd,format="%F")))))
+    mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
 
 land.bassrock<-lands %>% 
     dplyr::filter(site=="Bass Rock")
@@ -66,7 +64,7 @@ land.rouzic<-lands %>%
 mycol<-mako(2,begin=0.35,end=0.7)
 
 
-daysx<-c("12/08","21/08","31/08","10/09","20/09","30/09","15/10")
+daysx<-c("10/08","20/08","30/08","09/09","19/09","29/09","09/10")
 newdatrouz<-expand.grid(site=unique(trips.rouzic$site),
                     day=seq(min(trips.rouzic$day),
                             max(trips.rouzic$day),1))
@@ -78,13 +76,23 @@ newdatbass<-expand.grid(site=unique(trips.bassrock$site),
 
 #plot with separate datasets maximal distance to the colony
 glmm.dist.lme.rouzic<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.rouzic)
-glmm.dist.lme.bassrock<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.dist.rouz<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.rouzic)
 
-summary(glmm.dist.lme.rouzic)
-summary(glmm.dist.lme.bassrock)
+glmm.dist.lme.bassrock<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.dist.bass<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.bassrock)
+
+summary(glmm.dist.rouz)
+summary(glmm.dist.bass)
+
+par(mfrow=c(1,2))
+qqnorm(resid(glmm.dist.lme.rouzic))
+qqline(resid(glmm.dist.lme.rouzic))
+
+qqnorm(resid(glmm.dist.lme.bassrock))
+qqline(resid(glmm.dist.lme.bassrock))
 
 #predict fitted values and CI
-newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,level=0)
+newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,se.fit=T,level=0)
 newdatbass$pred<-predict(glmm.dist.lme.bassrock, newdata=newdatbass,level=0)
 grouz <- ref_grid(glmm.dist.lme.rouzic, cov.keep= c('day'))
 gbass <- ref_grid(glmm.dist.lme.bassrock, cov.keep= c('day'))
@@ -97,15 +105,15 @@ newdatall<-rbind(newdatbass,newdatrouz)
 emm<-rbind(emmbass,emmrouz)
 
 distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
-geom_point() +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
-    scale_x_continuous(limits=c(0,62),
+    scale_x_continuous(limits=c(0,64),
                        labels=daysx,
-                       breaks=seq(1,61,10),
+                       breaks=seq(0,64,10),
                        expand=c(0.001,0.05)) +
     scale_y_continuous(limits=c(0,700,100),
                        breaks=seq(0,700,100),
@@ -119,10 +127,12 @@ print(distgg)
 
 #plot with separate datasets trip duration
 glmm.dur.lme.rouzic<-lme(log(TripDurh) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.dur.rouz<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.rouzic)
 glmm.dur.lme.bassrock<-lme(log(TripDurh) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.dur.bass<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.bassrock)
 
-summary(glmm.dur.lme.rouzic)
-summary(glmm.dur.lme.bassrock)
+summary(glmm.dur.rouz)
+summary(glmm.dur.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.dur.lme.rouzic))
@@ -145,16 +155,16 @@ newdatall<-rbind(newdatbass,newdatrouz)
 emm<-rbind(emmbass,emmrouz)
 
 durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
-geom_point() +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Trip Duration (h)",tag="b)",x="") +
-    scale_x_continuous(limits=c(0,62),
+    scale_x_continuous(limits=c(0,64),
                        labels=daysx,
-                       breaks=seq(1,61,10),
-                       expand=c(0.0001,0.01)) +
+                       breaks=seq(0,64,10),
+                       expand=c(0.001,0.01)) +
     scale_y_continuous(limits=c(0,200),
                        breaks=seq(0,200,50),
                        expand=c(0.001,0)) +
@@ -169,10 +179,12 @@ print(durgg)
 
 #plot with separate datasets trip duration
 glmm.path.lme.rouzic<-lme(log(TotalPathkm) ~ day, random=~1 | id , data=trips.rouzic)
+glmm.path.rouz<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.rouzic)
 glmm.path.lme.bassrock<-lme(log(TotalPathkm) ~ day, random=~1 | id , data=trips.bassrock)
+glmm.path.bass<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.bassrock)
 
-summary(glmm.path.lme.rouzic)
-summary(glmm.path.lme.bassrock)
+summary(glmm.path.rouz)
+summary(glmm.path.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.path.lme.rouzic))
@@ -195,20 +207,20 @@ newdatall<-rbind(newdatbass,newdatrouz)
 emm<-rbind(emmbass,emmrouz)
 
 pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
-geom_point() +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= emm, 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Total distance travelled (km)",tag="c)",x="") +
-    scale_x_continuous(limits=c(0,62),
+    scale_x_continuous(limits=c(0,64),
                        labels=daysx,
-                       breaks=seq(1,61,10),
+                       breaks=seq(0,64,10),
                        expand=c(0.0001,0.01)) +
-    # scale_y_continuous(limits=c(0,200,50),
-    #                    breaks=seq(0,200,50),
-    #                    expand=c(0.001,0)) +
-    # 
+    scale_y_continuous(limits=c(0,1750),
+                       breaks=seq(0,1500,500),
+                       expand=c(0.001,0)) +
+
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
     theme(legend.position="none") 
@@ -218,10 +230,13 @@ print(pathgg)
 
 #plot with separate datasets time spend on land
 glmm.land.lme.rouzic<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.rouzic)
-glmm.land.lme.bassrock<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.bassrock)
+glmm.land.rouz<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id),data=land.rouzic)
 
-summary(glmm.land.lme.rouzic)
-summary(glmm.land.lme.bassrock)
+glmm.land.lme.bassrock<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.bassrock)
+glmm.land.bass<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id),data=land.bassrock)
+
+summary(glmm.land.rouz)
+summary(glmm.land.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.land.lme.rouzic))
@@ -244,15 +259,15 @@ newdatall<-rbind(newdatbass,newdatrouz)
 emm<-rbind(emmbass,emmrouz)
 
 durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
-geom_point() +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
      labs(y="Time attending the colony (h)",tag="d)",x="") +
-    scale_x_continuous(limits=c(0,62),
+    scale_x_continuous(limits=c(0,64),
                        labels=daysx,
-                       breaks=seq(1,61,10),
+                       breaks=seq(1,64,10),
                        expand=c(0.0001,0.01)) +
     scale_y_continuous(limits=c(0,60),
                        breaks=seq(0,60,10),
@@ -266,7 +281,7 @@ print(durlandgg)
 
 mylegend<-g_legend(durlandgg)
 
-tiff(here("outputs","Figure_LMM.tif"),width=7000,height=4500,res=600,
+tiff(here("outputs","Figure_LMM_trips.tif"),width=7000,height=4000,res=600,
      compression="lzw")
 grid.arrange(arrangeGrob(distgg,durgg,pathgg,
                          durlandgg+ theme(legend.position="none") ,
