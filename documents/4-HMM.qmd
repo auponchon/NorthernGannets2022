@@ -159,7 +159,7 @@ newdatbass<-expand.grid(site=unique(bassrock$site),
                     ID=NA)
 
 
-ggplot(act,aes(x=day,y=Act1,colour=site))+
+ggplot(dat.prop.tot,aes(x=day,y=Act1,colour=site))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2)
 
@@ -167,12 +167,14 @@ ggplot(act,aes(x=day,y=Act1,colour=site))+
 rest.glmer.rouz<-glmer(asin(Act1) ~ day + (1|ID), family = "binomial", 
                         data = rouzic) 
 
-rest.TMBglm.rouz<-glmmTMB(Act1 ~ day + (1|ID), family = "binomial",
+rest.TMBglm.rouz<-glmmTMB(Act1 ~ day +  (1|ID), 
+                          family = "nbinom2", ziformula = ~1,
                         data = rouzic)
 
 qqnorm(resid(rest.TMBglm.rouz))
 qqline(resid(rest.TMBglm.rouz))
 summary(rest.TMBglm.rouz)
+rr<-simulateResiduals(rest.TMBglm.rouz,plot=T)
 
 rest.glmer.bass<-glmer(asin(Act1) ~ day + (1|ID), family = "binomial", 
                         data = bassrock) 
@@ -196,7 +198,7 @@ newdatbass$predrestSE<-predict(rest.TMBglm.bass,newdata=newdatbass,se.fit=T,
                                     re.form=NA, type="response")$se.fit
 
 #Model for foraging activities
-ggplot(act,aes(x=day,y=Act2,colour=site))+
+ggplot(dat.prop.tot,aes(x=day,y=Act2,colour=site))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2)
 
@@ -230,7 +232,7 @@ newdatbass$predforSE<-predict(forag.TMBglm.bass,newdata=newdatbass,se.fit=T,
                                     re.form=NA,type="response")$se.fit
 
 #Model for flying activities
-ggplot(act,aes(x=day,y=Act3,colour=site))+
+ggplot(dat.prop.tot,aes(x=day,y=Act3,colour=site))+
     geom_point()+
     geom_smooth(method="lm",alpha=0.2)
 

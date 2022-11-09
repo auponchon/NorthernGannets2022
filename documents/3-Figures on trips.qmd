@@ -20,6 +20,7 @@ library(viridis)
 library(gridExtra)
 library(nlme)
 library(emmeans)
+library(DHARMa)
 
 source(here("R","trip_functions.R"))
 
@@ -87,9 +88,12 @@ summary(glmm.dist.bass)
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.dist.lme.rouzic))
 qqline(resid(glmm.dist.lme.rouzic))
+rr<-simulateResiduals(glmm.dist.rouz,plot=T)
 
 qqnorm(resid(glmm.dist.lme.bassrock))
 qqline(resid(glmm.dist.lme.bassrock))
+ss<-simulateResiduals(glmm.dist.bass,plot=T)
+
 
 #predict fitted values and CI
 newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,se.fit=T,level=0)
@@ -140,6 +144,10 @@ qqline(resid(glmm.dur.lme.rouzic))
 
 qqnorm(resid(glmm.dur.lme.bassrock))
 qqline(resid(glmm.dur.lme.bassrock))
+
+bb<-simulateResiduals(glmm.dur.rouz,plot=T)
+cc<-simulateResiduals(glmm.dur.bass,plot=T)
+
 
 #predict fitted values and CI
 newdatrouz$pred<-predict(glmm.dur.lme.rouzic, newdata=newdatrouz,level=0)
@@ -193,6 +201,9 @@ qqline(resid(glmm.path.lme.rouzic))
 qqnorm(resid(glmm.path.lme.bassrock))
 qqline(resid(glmm.path.lme.bassrock))
 
+ff<-simulateResiduals(glmm.path.rouz,plot=T)
+gg<-simulateResiduals(glmm.path.bass,plot=T)
+
 #predict fitted values and CI
 newdatrouz$pred<-predict(glmm.path.lme.rouzic, newdata=newdatrouz,level=0)
 newdatbass$pred<-predict(glmm.path.lme.bassrock, newdata=newdatbass,level=0)
@@ -244,6 +255,10 @@ qqline(resid(glmm.land.lme.rouzic))
 
 qqnorm(resid(glmm.land.lme.bassrock))
 qqline(resid(glmm.land.lme.bassrock))
+
+dd<-simulateResiduals(glmm.land.rouz,plot=T)
+qq<-simulateResiduals(glmm.land.bass,plot=T)
+
 
 #predict fitted values and CI
 newdatrouz$pred<-predict(glmm.land.lme.rouzic, newdata=newdatrouz,level=0)

@@ -4,11 +4,11 @@ format: html
 editor: visual
 ---
 
-## Plots with LME predictions
+## Predicting trends with GLMM
 
-Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.
+Data are imported and summarized to analyze trip characteristics
 
-```{r}
+```{r data import}
 #| echo: false
 #| include: true
 #| warning: false
@@ -21,6 +21,8 @@ library(gridExtra)
 library(nlme)
 library(emmeans)
 library(glmmTMB)
+library(strucchange)
+library(changepoint)
 
 source(here("R","trip_functions.R"))
 
@@ -60,8 +62,11 @@ land.bassrock<-lands %>%
     dplyr::filter(site=="Bass Rock")
 land.rouzic<-lands %>% 
      dplyr::filter(site=="Rouzic")
+```
 
+## Finding breakpoints in trip characteristics in Bass Rock
 
+```{r glmm}
 mycol<-mako(2,begin=0.35,end=0.7)
 
 
@@ -307,3 +312,5 @@ grid.arrange(arrangeGrob(distgg,durgg,pathgg,
 
     dev.off()      
 ```
+
+Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.
