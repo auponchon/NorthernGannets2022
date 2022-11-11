@@ -1,7 +1,7 @@
 ---
 title: "Northern gannets Bass Rock 2022"
 author: "Aurore Ponchon"
-format: docx
+format: html
 editor: visual
 ---
 
@@ -136,8 +136,8 @@ diffloc<-ggplot(rawLoc.bassrock,aes(x=datetime,y=difftimemin/60),group=id)+
 grid.arrange(distloc,diffloc,ncol=2)
 
 #summarize all trips and periods on land by individuals
-raw_trips_bassrock<-trips_summary_ind(rawLoc.bassrock)
-raw_land_bassrock<-land_summary_ind(rawLoc.bassrock)
+raw_trips_bassrock<-trips_summary_ind(rawLoc.bassrock,colony=colo_coord_bassrock)
+raw_land_bassrock<-land_summary_ind(rawLoc.bassrock,colony=colo_coord_bassrock)
 
 # write.csv(raw_trips_bassrock,file=here("data","NewlyCreatedData","raw_trips_summary_bassrock.csv"),
 #           row.names = F,quote=F)
@@ -247,57 +247,53 @@ save(loc.interp.bassrock,
 
 ##Ilustrate interpolations with raw data
 
-# longmn=-3
-# longmx=0
-# latmn=54.5
-# latmx=57.5
-# 
-# #crop polygon shapefile to the study area
-# world <- ne_countries(scale = 50, returnclass = 'sf')
-# colo_sf_bassrock<-st_as_sf(colo_coord_bassrock,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-# 
-# europe <- c("Belgium","Denmark","France","United Kingdom",
-#                    "Germany","Ireland","Netherlands",
-#                    "Portugal","Spain","Sweden")
-# europe_map <- 
-#     world %>% 
-#     dplyr::filter(name %in% europe)
-# 
-# bbox_europe <- st_bbox(c(xmin= longmn , ymin=latmn ,xmax=longmx, ymax = latmx), 
-#                        crs = projcrs)
-# europe_crop <- st_crop(europe_map, bbox_europe)
-# 
-# 
-# for (a in 1:length(ids)){
-#     raw<-cleanLocs.bassrock %>% 
-#         dplyr::filter(id==ids[a] & lat > 47) %>% 
-#         st_as_sf(.,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-#    
-#      interp.ind<-loc.interp.bassrock %>% 
-#         dplyr::filter(id==ids[a]& lat > 47) %>% 
-#      st_as_sf(.,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-# 
-# ##Ilustrate interpolations with raw data
-# longmin=floor(st_bbox(interp.ind)[1])
-# longmax=ceiling(st_bbox(interp.ind)[3])
-# latmin=floor(st_bbox(interp.ind)[2])
-# latmax=ceiling(st_bbox(interp.ind)[4]) 
-#      
-#      
-# mapa<-ggplot(data = europe_crop) +
-#     geom_sf(fill="grey") +
-#     coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
-#      geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
-#      geom_sf(data = raw, shape = 17, colour = "black",size=0.8) +
-#     geom_sf(data = colo_sf_bassrock, shape = 15, colour = "orange") +
-#     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
-#  print(mapa)   
+longmn=-3
+longmx=6
+latmn=54
+latmx=60
+
+#crop polygon shapefile to the study area
+world <- ne_countries(scale = 50, returnclass = 'sf')
+colo_sf_bassrock<-st_as_sf(colo_coord_bassrock,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+europe <- c("Belgium","Denmark","France","United Kingdom",
+                   "Germany","Ireland","Netherlands",
+                   "Portugal","Spain","Sweden")
+europe_map <-
+    world %>%
+    dplyr::filter(name %in% europe)
+
+
+for (a in 1:length(ids)){
+    raw<-cleanLocs.bassrock %>%
+        dplyr::filter(id==ids[a] & lat > 47) %>%
+        st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+         interp.ind<-loc.interp.bassrock %>%
+        dplyr::filter(id==ids[a]& lat > 47) %>%
+     st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+##Ilustrate interpolations with raw data
+longmin=floor(st_bbox(interp.ind)[1])
+longmax=ceiling(st_bbox(interp.ind)[3])
+latmin=floor(st_bbox(interp.ind)[2])
+latmax=ceiling(st_bbox(interp.ind)[4])
+
+
+mapa<-ggplot(data = europe_map) +
+    geom_sf(fill="grey") +
+     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+     geom_sf(data = raw, shape = 17, colour = "black",size=0.8) +
+    geom_sf(data = colo_sf_bassrock, shape = 15, colour = "orange") +
+      coord_sf(xlim = c(longmn,longmx), ylim = c(latmn, latmx), expand = FALSE) +
+    labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
+ print(mapa)
 #     
 #     
 # tp<-unique(raw$trip.id)  
@@ -337,7 +333,8 @@ save(loc.interp.bassrock,
 #     labs(title =  tp[b])
 #  print(ma)
 #  dev.off()
-# }}
+# }
+ }
 # 
 
 
@@ -356,7 +353,7 @@ At-sea trips retained are at least \>1h long, \>1km from the colony and have mor
 
 load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
-trips_interp_bassrock<-trips_summary_ind(loc.interp.bassrock)
+trips_interp_bassrock<-trips_summary_ind(loc.interp.bassrock,colony=colo_coord_bassrock)
 
 ##plot trip and land periods
 cleandist<-ggplot(trips_interp_bassrock,aes(x=DateEnd,y=Distmaxkm),group=id)+

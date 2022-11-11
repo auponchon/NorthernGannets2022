@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>3-Trips characteristics</title>
+<title>3-Trips characteristics with LMM</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -29,6 +29,9 @@ ul.task-list{list-style: none;}
 <link href="3-Figures on trips_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="3-Figures on trips_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+<script src="3-Figures on trips_files/libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="3-Figures on trips_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
 
 </head>
 
@@ -40,7 +43,7 @@ ul.task-list{list-style: none;}
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">3-Trips characteristics</h1>
+<h1 class="title">3-Trips characteristics with LMM</h1>
 </div>
 
 
@@ -58,6 +61,96 @@ ul.task-list{list-style: none;}
 <h2 class="anchored" data-anchor-id="plots-with-lme-predictions">Plots with LME predictions</h2>
 <p>Linear mixed models are applied on trip charateristics to test whether individuals change their behaviour over time. Models are fitted on each colony separately.</p>
 <div class="cell">
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Sample size</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> site </th>
+   <th style="text-align:right;"> Ids </th>
+   <th style="text-align:right;"> Trips </th>
+   <th style="text-align:left;"> Debut </th>
+   <th style="text-align:left;"> Fin </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 310 </td>
+   <td style="text-align:left;"> 2022-08-11 14:27:16 </td>
+   <td style="text-align:left;"> 2022-10-12 11:10:36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 13 </td>
+   <td style="text-align:right;"> 257 </td>
+   <td style="text-align:left;"> 2022-08-24 05:34:11 </td>
+   <td style="text-align:left;"> 2022-09-28 06:30:29 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Summary of trip characteristics</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> site </th>
+   <th style="text-align:right;"> Ids </th>
+   <th style="text-align:right;"> Trips </th>
+   <th style="text-align:left;"> Debut </th>
+   <th style="text-align:left;"> Fin </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 310 </td>
+   <td style="text-align:left;"> 2022-08-11 14:27:16 </td>
+   <td style="text-align:left;"> 2022-10-12 11:10:36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 13 </td>
+   <td style="text-align:right;"> 257 </td>
+   <td style="text-align:left;"> 2022-08-24 05:34:11 </td>
+   <td style="text-align:left;"> 2022-09-28 06:30:29 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Summary of next attendance</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> site </th>
+   <th style="text-align:right;"> Time_mean </th>
+   <th style="text-align:right;"> Time_se </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 16 </td>
+   <td style="text-align:right;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 11 </td>
+   <td style="text-align:right;"> 1 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 lmerModLmerTest]
@@ -88,6 +181,11 @@ Correlation of Fixed Effects:
 day -0.912</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+     Sum Sq Mean Sq NumDF  DenDF F value Pr(&gt;F)
+day 0.15412 0.15412     1 229.32  0.2784 0.5983</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 lmerModLmerTest]
 Formula: log(Distmaxkm) ~ day + (1 | id)
@@ -116,11 +214,24 @@ Correlation of Fixed Effects:
     (Intr)
 day -0.666</code></pre>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+    Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+day 6.5194  6.5194     1 307.21  4.1246 0.04312 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
 <p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
@@ -152,6 +263,13 @@ Correlation of Fixed Effects:
 day -0.900</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+    Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+day 1.9984  1.9984     1 238.33  2.9888 0.08514 .
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 lmerModLmerTest]
 Formula: log(TripDurh) ~ day + (1 | id)
@@ -180,11 +298,24 @@ Correlation of Fixed Effects:
     (Intr)
 day -0.637</code></pre>
 </div>
-<div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid" width="672"></p>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+    Sum Sq Mean Sq NumDF  DenDF F value   Pr(&gt;F)   
+day  12.78   12.78     1 307.77  10.826 0.001117 **
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid" width="672"></p>
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-8.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
@@ -216,6 +347,11 @@ Correlation of Fixed Effects:
 day -0.929</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+        Sum Sq    Mean Sq NumDF  DenDF F value Pr(&gt;F)
+day 5.8722e-06 5.8722e-06     1 200.58       0 0.9976</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 lmerModLmerTest]
 Formula: log(TotalPathkm) ~ day + (1 | id)
@@ -244,11 +380,24 @@ Correlation of Fixed Effects:
     (Intr)
 day -0.659</code></pre>
 </div>
-<div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-5.png" class="img-fluid" width="672"></p>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+    Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+day  9.383   9.383     1 307.39  5.4662 0.02003 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-6.png" class="img-fluid" width="672"></p>
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-12.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
@@ -280,6 +429,13 @@ Correlation of Fixed Effects:
 day -0.888</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+    Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+day 3.2577  3.2577     1 232.97   4.568 0.03362 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
 <pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
 lmerModLmerTest]
 Formula: log(LandDurh) ~ day + (1 | id)
@@ -308,11 +464,22 @@ Correlation of Fixed Effects:
     (Intr)
 day -0.754</code></pre>
 </div>
-<div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-7.png" class="img-fluid" width="672"></p>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type III Analysis of Variance Table with Satterthwaite's method
+     Sum Sq Mean Sq NumDF  DenDF F value Pr(&gt;F)
+day 0.46858 0.46858     1 296.88   0.586 0.4446</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-8.png" class="img-fluid" width="672"></p>
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-15.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="3-Figures-on-trips_files/figure-html/unnamed-chunk-1-16.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>png 

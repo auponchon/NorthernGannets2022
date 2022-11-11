@@ -14,7 +14,7 @@ Behavioural states are associated with each trip location:
 
 -   state 3: travelling
 
-```{r}
+```{r HMM}
 #| echo: false
 #| include: true
 #| warning: false
@@ -90,15 +90,9 @@ kappa0<-c(4.5767898 ,1.2674079, 2.0306179)
  
 ```
 
-# 2- Calculating proportions of activities
+# 2- Calculating proportions of each state
 
-\# fly.glmer.bass\<-glmer(asin(Act3) \~ day + (1 \| ID), family = "binomial",
-
-\# data = bassrock)
-
-\#
-
-```{r}
+```{r glmmTMB}
 
 #| echo: false
 #| include: true
@@ -107,9 +101,11 @@ kappa0<-c(4.5767898 ,1.2674079, 2.0306179)
 
 library(lme4)
 library(glmmTMB)
-library(lmerTest)
 library(viridis)
 library(gridExtra)
+library(kableExtra)
+library(plotrix)
+library(DHARMa)
 
 mycol<-mako(2,begin=0.35,end=0.7)
 
@@ -135,6 +131,23 @@ dat.prop.tot<-dat.prop %>%
                 values_from = PropAct,
                 names_sep=".",
                 values_fill=0)
+
+
+dat.id<-dat.prop.tot %>% 
+    group_by(site,ID) %>% 
+     summarize(across(c("Act1","Act2","Act3"), mean, na.rm=T)) %>% 
+    as.data.frame()
+
+dat.id
+
+sum.act<- dat.id %>% 
+    group_by(site) %>% 
+    summarize(across(c("Act1","Act2","Act3"), 
+                     list(mean=mean,
+                          se=std.error))) %>% 
+    mutate(across(where(is.numeric), round,digits=3))
+
+sum.act
 
 daysx<-c("10/08","20/08","30/08","09/09","19/09","29/09","09/10")
 
@@ -268,8 +281,8 @@ newdatbass$predflySE<-predict(fly.TMBglm.bass,newdata=newdatbass,se.fit=T,
 newdatall<-rbind(newdatbass,newdatrouz)
 
 restgg<-ggplot(dat.prop.tot, aes(x=day, y=Act1 ,colour=site)) + 
-geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=predrest),lwd=2) +
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=predrest),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predrest-predrestSE, 
                 ymax= predrest+predrestSE, y= NULL,
@@ -286,13 +299,14 @@ geom_ribbon(data= newdatall,
     
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
-    theme(legend.position="none") 
+    theme_light()+
+    theme(legend.position="none")
 print(restgg)
 
 #
 forgg<-ggplot(dat.prop.tot, aes(x=day, y=Act2 ,colour=site)) + 
-geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=predfor),lwd=2) +
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=predfor),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predfor-predforSE, 
                 ymax= predfor+predforSE, y= NULL,
@@ -308,13 +322,14 @@ geom_ribbon(data= newdatall,
                        expand=c(0.01,0)) + 
     
   scale_colour_manual(values=mycol) +
-    scale_fill_manual(values=mycol)  +
-    theme(legend.position="none") 
+    scale_fill_manual(values=mycol) +
+    theme_light()+
+    theme(legend.position="none")
 print(forgg)
 
 flygg<-ggplot(dat.prop.tot, aes(x=day, y=Act3 ,colour=site)) + 
-geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=predfly),lwd=2) +
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=predfly),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predfly-predflySE, 
                 ymax= predfly+predflySE, y= NULL,
@@ -329,8 +344,9 @@ geom_ribbon(data= newdatall,
                        breaks=seq(0,1,0.2),
                        expand=c(0.01,0)) + 
     
-  scale_colour_manual(values=mycol) +
-    scale_fill_manual(values=mycol) 
+  scale_colour_manual(values=mycol, name="Colony") +
+    scale_fill_manual(values=mycol, name="Colony") +
+    theme_light()
 print(flygg)
 
 mylegend<-g_legend(flygg)

@@ -1,5 +1,5 @@
 ---
-title: "3-Trips characteristics"
+title: "3-Trips characteristics with LMM"
 format: html
 editor: visual
 ---
@@ -21,6 +21,8 @@ library(gridExtra)
 library(nlme)
 library(emmeans)
 library(DHARMa)
+library(kableExtra)
+library(plotrix)
 
 source(here("R","trip_functions.R"))
 
@@ -62,6 +64,49 @@ land.rouzic<-lands %>%
      dplyr::filter(site=="Rouzic")
 
 
+#Table summary
+
+sum.ids<-trips %>% 
+    group_by(site) %>% 
+    summarize(Ids=length(unique(id)),
+              Trips=length(unique(trip.id)),
+              Debut=min(DateEnd),
+              Fin=max(DateEnd))
+  
+kbl(sum.ids,caption="Sample size") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+sum.id<- trips %>% 
+    group_by(site,id) %>% 
+    summarize(across(c(Distmaxkm, TripDurh, TotalPathkm), ~ mean(.x, na.rm = TRUE))) %>% 
+    as.data.frame()
+
+sum.trips<- sum.id %>% 
+    group_by(site) %>% 
+    summarize(across(where(is.numeric), 
+                     list(mean=mean,
+                          se=std.error))) %>% 
+    mutate(across(where(is.numeric), round,digits=0))
+
+land.id<- lands %>% 
+    group_by(site,id) %>% 
+    summarize(Time= mean(LandDurh, na.rm=T)) %>% 
+    as.data.frame()
+
+sum.lands<- land.id %>% 
+    group_by(site) %>% 
+    summarize(across(where(is.numeric), 
+                     list(mean=mean,
+                          se=std.error))) %>% 
+    mutate(across(where(is.numeric), round,digits=0))
+
+kbl(sum.ids,caption="Summary of trip characteristics") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(sum.lands,caption="Summary of next attendance") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
 mycol<-mako(2,begin=0.35,end=0.7)
 
 
@@ -83,20 +128,23 @@ glmm.dist.lme.bassrock<-lme(log(Distmaxkm) ~ day, random=~1 | id , data=trips.ba
 glmm.dist.bass<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.bassrock)
 
 summary(glmm.dist.rouz)
+anova(glmm.dist.rouz)
 summary(glmm.dist.bass)
+anova(glmm.dist.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.dist.lme.rouzic))
 qqline(resid(glmm.dist.lme.rouzic))
-rr<-simulateResiduals(glmm.dist.rouz,plot=T)
 
 qqnorm(resid(glmm.dist.lme.bassrock))
 qqline(resid(glmm.dist.lme.bassrock))
+
+rr<-simulateResiduals(glmm.dist.rouz,plot=T)
 ss<-simulateResiduals(glmm.dist.bass,plot=T)
 
 
 #predict fitted values and CI
-newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,se.fit=T,level=0)
+newdatrouz$pred<-predict(glmm.dist.lme.rouzic, newdata=newdatrouz,level=0)
 newdatbass$pred<-predict(glmm.dist.lme.bassrock, newdata=newdatbass,level=0)
 grouz <- ref_grid(glmm.dist.lme.rouzic, cov.keep= c('day'))
 gbass <- ref_grid(glmm.dist.lme.bassrock, cov.keep= c('day'))
@@ -110,7 +158,7 @@ emm<-rbind(emmbass,emmrouz)
 
 distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
 geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
@@ -122,9 +170,9 @@ geom_ribbon(data= data.frame(emm),
     scale_y_continuous(limits=c(0,700,100),
                        breaks=seq(0,700,100),
                        expand=c(0.01,0)) + 
-    
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
+     theme_light()+
     theme(legend.position="none") 
     
 print(distgg)
@@ -136,7 +184,9 @@ glmm.dur.lme.bassrock<-lme(log(TripDurh) ~ day, random=~1 | id , data=trips.bass
 glmm.dur.bass<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.bassrock)
 
 summary(glmm.dur.rouz)
+anova(glmm.dur.rouz)
 summary(glmm.dur.bass)
+anova(glmm.dur.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.dur.lme.rouzic))
@@ -164,7 +214,7 @@ emm<-rbind(emmbass,emmrouz)
 
 durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
 geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
@@ -179,6 +229,7 @@ geom_ribbon(data= data.frame(emm),
     
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
+    theme_light()+
     theme(legend.position="none") 
     
 print(durgg)
@@ -192,7 +243,9 @@ glmm.path.lme.bassrock<-lme(log(TotalPathkm) ~ day, random=~1 | id , data=trips.
 glmm.path.bass<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.bassrock)
 
 summary(glmm.path.rouz)
+anova(glmm.path.rouz)
 summary(glmm.path.bass)
+anova(glmm.path.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.path.lme.rouzic))
@@ -219,7 +272,7 @@ emm<-rbind(emmbass,emmrouz)
 
 pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
 geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
 geom_ribbon(data= emm, 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
@@ -234,6 +287,7 @@ geom_ribbon(data= emm,
 
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
+    theme_light()+
     theme(legend.position="none") 
     
 print(pathgg)
@@ -247,7 +301,9 @@ glmm.land.lme.bassrock<-lme(log(LandDurh) ~ day, random=~1 | id , data=land.bass
 glmm.land.bass<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id),data=land.bassrock)
 
 summary(glmm.land.rouz)
+anova(glmm.land.rouz)
 summary(glmm.land.bass)
+anova(glmm.land.bass)
 
 par(mfrow=c(1,2))
 qqnorm(resid(glmm.land.lme.rouzic))
@@ -275,7 +331,7 @@ emm<-rbind(emmbass,emmrouz)
 
 durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
 geom_point(alpha=0.4) +
- geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=2) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
 geom_ribbon(data= data.frame(emm), 
             aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
             alpha=0.4,colour = NA) +
@@ -289,7 +345,8 @@ geom_ribbon(data= data.frame(emm),
                        expand=c(0.001,0)) +
 
   scale_colour_manual(values=mycol,name="Colony") +
-    scale_fill_manual(values=mycol,name="Colony")  
+    scale_fill_manual(values=mycol,name="Colony")  +
+     theme_light()
     
     
 print(durlandgg)

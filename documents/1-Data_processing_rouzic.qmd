@@ -1,7 +1,7 @@
 ---
 title: "Northern gannets Rouzic 2022"
 author: "Aurore Ponchon"
-format: docx
+format: html
 editor: visual
 ---
 
@@ -30,17 +30,17 @@ library(conflicted)
 source(here("R","trip_functions.R"))
 
 
-#   loginStored <- movebankLogin(username="AurorePonchon", password="AlbaNoir0*")
-#   gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
-# # metadata<-getMovebankStudy(study=gannets,login=loginStored)
-# # getMovebankSensorsAttributes(study=gannets,login=loginStored)
-# # reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
-#   move.rouzic <- getMovebankData(study=gannets, login=loginStored,
-#                                removeDuplicatedTimestamps=TRUE)
-#   save(move.rouzic,file=here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
-#  
-#  leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
-#  writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets", driver="ESRI Shapefile", overwrite_layer =T)
+  loginStored <- movebankLogin(username="AurorePonchon", password="**")
+  gannets<-searchMovebankStudies(x="gannet", login=loginStored)[1]
+# metadata<-getMovebankStudy(study=gannets,login=loginStored)
+# getMovebankSensorsAttributes(study=gannets,login=loginStored)
+# reftable<-getMovebankReferenceTable(study=gannets,login=loginStored)
+ #  move.rouzic <- getMovebankData(study=gannets, login=loginStored,
+ #                               removeDuplicatedTimestamps=TRUE)
+ #  save(move.rouzic,file=here("data","raw","rouzic","gannets_rouzic_raw_2022.Rdata"))
+ # 
+ # leroySPDF <- as(move.rouzic,"SpatialPointsDataFrame")
+ # writeOGR(leroySPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets_rouzic", driver="ESRI Shapefile", overwrite_layer =T)
 
 ```
 
@@ -257,58 +257,54 @@ loc.interp.rouzic <- loc.clean.interp.rouzic %>%
 save(loc.interp.rouzic,file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
 
 ##Ilustrate interpolations with raw data
-# longmn=-5
-# longmx=2
-# latmn=47
-# latmx=52
-# 
-# #crop polygon shapefile to the study area
-# world <- ne_countries(scale = 50, returnclass = 'sf')
-# colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-# 
-# europe <- c("Belgium","Denmark","France",
-#                    "Germany","Ireland","Netherlands",
-#                    "Portugal","Spain","Sweden")
-# europe_map <- 
-#     world %>% 
-#     dplyr::filter(name %in% europe)
-# 
-# bbox_europe <- st_bbox(c(xmin= longmn , ymin=latmn ,xmax=longmx, ymax = latmx), 
-#                        crs = projcrs)
-# europe_crop <- st_crop(europe_map, bbox_europe)
-# 
-# 
-# for (a in 1:length(ids)){
-#     raw<-cleanLocs.rouzic %>% 
-#         dplyr::filter(id==ids[a] & lat > 47) %>% 
-#         st_as_sf(.,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-#    
-#      interp.ind<-loc.clean.interp %>% 
-#         dplyr::filter(id==ids[a]& lat > 47) %>% 
-#      st_as_sf(.,                         
-#            coords = c("long", "lat"),
-#            crs = projcrs)
-# 
-# ##Ilustrate interpolations with raw data
-# longmin=floor(extent(interp.ind)[1])
-# longmax=ceiling(extent(interp.ind)[2])
-# latmin=floor(extent(interp.ind)[3])
-# latmax=ceiling(extent(interp.ind)[4]) 
-#      
-#      
-# mapa<-ggplot(data = europe_crop) +
-#     geom_sf(fill="grey") +
-#     coord_sf(xlim = c(longmin,longmax), ylim = c(latmin, latmax), expand = FALSE) +
-#      geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
-#      geom_sf(data = raw, shape = 17, colour = "black") +
-#     geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
-#     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
-#  print(mapa)   
-#     
+longmn=-7
+longmx=2
+latmn=47
+latmx=52
+
+#crop polygon shapefile to the study area
+world <- ne_countries(scale = 50, returnclass = 'sf')
+colo_sf_rouzic<-st_as_sf(colo_coord_rouzic,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+europe <- c("Belgium","Denmark","France",
+                   "Germany","Ireland","Netherlands",
+                   "Portugal","Spain","Sweden")
+europe_map <-
+    world %>%
+    dplyr::filter(name %in% europe)
+
+
+for (a in 1:length(ids)){
+    raw<-cleanLocs.rouzic %>%
+        dplyr::filter(id==ids[a] & lat > 47) %>%
+        st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+     interp.ind<-loc.interp.rouzic %>%
+        dplyr::filter(id==ids[a]& lat > 47) %>%
+     st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+##Ilustrate interpolations with raw data
+longmin=floor(extent(interp.ind)[1])
+longmax=ceiling(extent(interp.ind)[2])
+latmin=floor(extent(interp.ind)[3])
+latmax=ceiling(extent(interp.ind)[4])
+
+
+mapa<-ggplot(data = europe_map) +
+    geom_sf(fill="grey") +
+     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+     geom_sf(data = raw, shape = 17, colour = "black") +
+    geom_sf(data = colo_sf_rouzic, shape = 15, colour = "orange") +
+     coord_sf(xlim = c(longmn,longmx), ylim = c(latmn, latmx), expand = FALSE) +
+    labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
+ print(mapa)
+
 # tp<-unique(raw$trip.id)  
 #    
 # for (b in 1:length(tp)) {
@@ -349,7 +345,7 @@ save(loc.interp.rouzic,file=here("Data","NewlyCreatedData","loc_clean_interp_rou
 #  print(ma)
 #  dev.off()
 # }
-# }# 
+ }# 
 
 
 ```

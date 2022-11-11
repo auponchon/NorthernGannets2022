@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.0.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Aurore Ponchon">
+
+<title>Northern gannets Bass Rock 2022</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+<script src="2-Data_processing_bass_rock_files/libs/clipboard/clipboard.min.js"></script>
+<script src="2-Data_processing_bass_rock_files/libs/quarto-html/quarto.js"></script>
+<script src="2-Data_processing_bass_rock_files/libs/quarto-html/popper.min.js"></script>
+<script src="2-Data_processing_bass_rock_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="2-Data_processing_bass_rock_files/libs/quarto-html/anchor.min.js"></script>
+<link href="2-Data_processing_bass_rock_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="2-Data_processing_bass_rock_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="2-Data_processing_bass_rock_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="2-Data_processing_bass_rock_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="2-Data_processing_bass_rock_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Northern gannets Bass Rock 2022</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Aurore Ponchon </p>
+          </div>
+  </div>
+    
+    
+  </div>
+  
+
+</header>
+
+<section id="importing-data" class="level2">
+<h2 class="anchored" data-anchor-id="importing-data">1- Importing data</h2>
+<p>GPS data are stored as individual excel files w. I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. I illustrate the raw data locations by some descriptive plots.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="interpolation" class="level2">
+<h2 class="anchored" data-anchor-id="interpolation">2- Interpolation</h2>
+<p>As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min. We then compared each raw trip with interpolations.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-2-10.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="summary-of-clean-trips" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-clean-trips">3- Summary of clean trips</h2>
+<p>At-sea trips retained are at least &gt;1h long, &gt;1km from the colony and have more than 4 locations.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="effect-of-time-on-trip-charateristics-glmm" class="level2">
+<h2 class="anchored" data-anchor-id="effect-of-time-on-trip-charateristics-glmm">5- Effect of time on trip charateristics (GLMM)</h2>
+<p>According to GLMM, no effect of day on maximal distance, weak effect on trip duration and no effect on the total distance travelled during a trip.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(Distmaxkm) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 1044
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9441 -0.4449  0.1643  0.6654  1.9222 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.08814  0.2969  
+ Residual             1.59845  1.2643  
+Number of obs: 310, groups:  id, 10
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 3.916e+00  1.605e-01 2.862e+01  24.398   &lt;2e-16 ***
+day         3.796e-03  4.601e-03 3.078e+02   0.825     0.41    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.652</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TripDurh) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 960.4
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.4297 -0.6755  0.1498  0.7474  2.1883 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.0837   0.2893  
+ Residual             1.2133   1.1015  
+Number of obs: 310, groups:  id, 10
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 2.272e+00  1.460e-01 2.524e+01  15.563  1.9e-14 ***
+day         6.050e-03  4.015e-03 3.075e+02   1.507    0.133    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.623</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(TotalPathkm) ~ day + (1 | id)
+   Data: trips.interp.nomigr
+
+REML criterion at convergence: 1070.8
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9636 -0.4857  0.1527  0.6905  1.9200 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.1025   0.3201  
+ Residual             1.7419   1.3198  
+Number of obs: 310, groups:  id, 10
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept) 4.784e+00  1.695e-01 2.783e+01  28.216   &lt;2e-16 ***
+day         4.571e-03  4.805e-03 3.077e+02   0.951    0.342    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+    (Intr)
+day -0.644</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-4-9.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="effect-of-time-on-colony-attendance-glmm" class="level2">
+<h2 class="anchored" data-anchor-id="effect-of-time-on-colony-attendance-glmm">6- Effect of time on colony attendance (GLMM)</h2>
+<p>According to GLMM, no effect of day on duration of periods on land at the colony.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(LandDurh) ~ day + (1 | id)
+   Data: lands
+
+REML criterion at convergence: 798.7
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9534 -0.5792  0.3523  0.6870  1.9221 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.02166  0.1472  
+ Residual             0.80039  0.8946  
+Number of obs: 299, groups:  id, 10
+
+Fixed effects:
+              Estimate Std. Error         df t value Pr(&gt;|t|)    
+(Intercept)   2.490135   0.106366  44.088912  23.411   &lt;2e-16 ***
+day          -0.001407   0.003425 295.750171  -0.411    0.682    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="2-Data_processing_bass_rock_files/figure-html/unnamed-chunk-5-3.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
