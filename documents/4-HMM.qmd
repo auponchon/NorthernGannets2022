@@ -281,7 +281,7 @@ newdatbass$predflySE<-predict(fly.TMBglm.bass,newdata=newdatbass,se.fit=T,
 newdatall<-rbind(newdatbass,newdatrouz)
 
 restgg<-ggplot(dat.prop.tot, aes(x=day, y=Act1 ,colour=site)) + 
-geom_point(alpha=0.6) +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=predrest),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predrest-predrestSE, 
@@ -305,7 +305,7 @@ print(restgg)
 
 #
 forgg<-ggplot(dat.prop.tot, aes(x=day, y=Act2 ,colour=site)) + 
-geom_point(alpha=0.6) +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=predfor),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predfor-predforSE, 
@@ -328,7 +328,7 @@ geom_ribbon(data= newdatall,
 print(forgg)
 
 flygg<-ggplot(dat.prop.tot, aes(x=day, y=Act3 ,colour=site)) + 
-geom_point(alpha=0.6) +
+geom_point(alpha=0.4) +
  geom_line(data=newdatall,aes(x=day,y=predfly),lwd=1.5) +
 geom_ribbon(data= newdatall,
             aes(ymin= predfly-predflySE, 

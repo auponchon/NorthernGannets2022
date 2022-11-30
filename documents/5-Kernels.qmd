@@ -7,6 +7,18 @@ editor: visual
 
 # Calculating kernels
 
+source(here("R","trip_functions.R"))
+
+\# font_add_google(name="Rokkitt",family="rokkitt")
+
+\# showtext_auto()
+
+#bassrock for trips
+
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
+
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+
 ```{r}
 
 library(here)
@@ -23,6 +35,7 @@ source(here("R","trip_functions.R"))
 # font_add_google(name="Rokkitt",family="rokkitt")
 # showtext_auto()
 
+remotes::install_github("idmn/ggview")
 
 #bassrock for trips
 load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
@@ -118,7 +131,7 @@ sf_lines_bass <- sf_locs_bass %>%
 bassgg<-ggplot()+
      geom_sf(data=land_proj_bass,fill="grey90",size=0.2) +   
      geom_sf(data = sf_lines_bass, mapping=aes(colour=Date),alpha=0.7) +
-     geom_sf(data = coord_bassrock,shape=23, colour="black",fill="yellow", size=3) + 
+     geom_sf(data = coord_bassrock,shape=23, colour="black",fill="yellow", size=4) + 
      coord_sf(xlim = c(longmnbr,longmxbr), ylim=c(latmnbr, latmxbr),  expand = FALSE) +
      labs(tag="a)") +
      scale_colour_gradientn(colours=magma(length(unique(sf_lines_bass$Date))),
@@ -130,13 +143,17 @@ bassgg<-ggplot()+
     annotation_north_arrow(location = "br", which_north = "true",
     style = ggspatial::north_arrow_nautical(), pad_y = unit(0.8, "cm")) +
     theme_bw() +
-    theme( plot.margin = margin(0,0,0,0))
+    theme(legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
 
 print(bassgg)
 
-write_sf(sf_lines_bass, dsn=here("data","NewlyCreatedData","shapefiles"),
-         driver="ESRI Shapefile",
-         layer="tracks_bassrock", append=F, delete_layer=T)
+legbass<-g_legend(bassgg+theme(legend.position="left")+
+    guides(color = guide_colorbar(reverse = TRUE)))
+
+# write_sf(sf_lines_bass, dsn=here("data","NewlyCreatedData","shapefiles"),
+#          driver="ESRI Shapefile",
+#          layer="tracks_bassrock", append=F, delete_layer=T)
 ```
 
 # Representing tracks over time for Rouzic
@@ -193,7 +210,7 @@ sf_lines_rouz <- sf_locs_rouz %>%
 rouzgg<-ggplot()+
      geom_sf(data = sf_lines_rouz, mapping=aes(colour=Date),alpha=0.7) +
      geom_sf(data=land_proj_rouz,fill="grey90",size=0.2) +   
-     geom_sf(data = coord_rouzic,shape=23, colour="black",fill="yellow", size=3) + 
+     geom_sf(data = coord_rouzic,shape=23, colour="black",fill="yellow", size=4) + 
      coord_sf(xlim = c(longmnr,longmxr), ylim=c(latmnr, latmxr),  expand = FALSE) +
     labs(tag="b)") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_rouz$Date))),
@@ -205,17 +222,91 @@ rouzgg<-ggplot()+
     annotation_north_arrow(location = "br", which_north = "true",
     style = ggspatial::north_arrow_nautical(), pad_y = unit(0.3, "cm")) +
     theme_bw() +
-    theme( plot.margin = margin(0,0,0,0))
+    theme(legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
+
 print(rouzgg)
 
-write_sf(sf_lines_rouz, dsn=here("data","NewlyCreatedData","shapefiles"),
-         driver="ESRI Shapefile",
-         layer="tracks_rouzic", append=F, delete_layer=T)
+legrouz<-g_legend(rouzgg+theme(legend.position="left")+
+    guides(color = guide_colorbar(reverse = TRUE)))
 
 
-tiff(here("outputs","Figure_maps.tif"),width=7000,height=4000,res=600,
+# write_sf(sf_lines_rouz, dsn=here("data","NewlyCreatedData","shapefiles"),
+#          driver="ESRI Shapefile",
+#          layer="tracks_rouzic", append=F, delete_layer=T)
+
+
+# tiff(here("outputs","Figure_maps.tif"),width=7000,height=4000,res=600,
+#      compression="lzw")
+# grid.arrange(bassgg,rouzgg,ncol=2,widths=c(1,1.1)) 
+# 
+#     dev.off()     
+```
+
+# Bearing of trips over time
+
+```{r}
+library(geosphere)
+loc.rouz<-loc.interp.rouzic
+loc.bass<-loc.interp.bassrock
+
+#loc<-rbind(loc.rouz,loc.bass)
+
+loc.rouz$Week<-as.factor(as.numeric(format(loc.rouz$datetime,
+                                               format="%W"))-31)
+#loc.rouz$Week<-factor(loc.rouz$Week, levels=c("8","7","6","5","4","3"))
+loc.bass$Week<-as.factor(as.numeric(format(loc.bass$datetime,
+                                               format="%W"))-31)
+# loc.bass$Week<-factor(loc.bass$Week, 
+#                       levels=c("10","9","8","7","6","5","4","3","2","1"))
+loc.rouz$Bearing<-0
+loc.bass$Bearing<-0
+loc.rouz$Bearing<-(bearing(loc.rouz[,c("long","lat")],
+                                         colo_coord_rouzic[,c("long","lat")],
+                                         f=0))+180
+loc.bass$Bearing<-(bearing(loc.bass[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
+                                         f=0))+180
+
+mycol<-magma(10)
+
+brk<-seq(0,360,30)
+g1<-ggplot(loc.bass, aes(x = Bearing, group=Week)) +
+  geom_histogram(aes(fill=Week), color = "gray10",breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
+     scale_y_continuous(breaks=seq(0,8000,2000),limits=c(0,8500))+
+  scale_fill_manual(values = mycol) +
+     labs(y="Nb of locations",x="",tag="c)")+
+  coord_polar(theta="x",start = 0, direction = 1,clip="on") +
+#  facet_grid(. ~ site) +
+  theme_minimal() +
+  theme( legend.position = "none",
+        plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
+     axis.ticks.y = element_line(),
+     axis.title.y = element_text(hjust=0.8))
+  
+  print(g1)  
+  
+ g2<-ggplot(loc.rouz, aes(x = Bearing,group=Week)) +
+  geom_histogram(aes(fill=Week), color = "gray10",breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
+  scale_y_continuous(breaks=seq(0,5000,1000),limits=c(0,5000))+
+  scale_fill_manual(values = viridis(6)) +
+  coord_polar(theta="x",start = 0, direction = 1,clip="on") +
+     labs(y="Nb of locations",x="",tag="d)")+
+#  facet_grid(. ~ site) +
+  theme_minimal() +
+  theme( legend.position = "none",
+          plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
+         axis.ticks.y = element_line(),
+         axis.title.y = element_text(hjust=0.8))
+  
+  print(g2)  
+  
+  tiff(here("outputs","Figure_maps_bearing.tif"),width=6000,height=4000,res=600,
      compression="lzw")
-grid.arrange(bassgg,rouzgg,ncol=2,widths=c(1,1.1)) 
-
-    dev.off()     
+   grid.arrange(bassgg,g1,legbass,
+                            rouzgg ,g2 ,legrouz,
+                                     nrow=2, ncol=3, widths=c(1,1,0.5))
+  
+  dev.off()
 ```

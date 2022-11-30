@@ -709,8 +709,8 @@ day         -0.001439   0.007147  -0.201     0.84</code></pre>
 <span id="cb82-11"><a href="#cb82-11" aria-hidden="true" tabindex="-1"></a>newdatall<span class="ot">&lt;-</span><span class="fu">rbind</span>(newdatbass,newdatrouz)</span>
 <span id="cb82-12"><a href="#cb82-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb82-13"><a href="#cb82-13" aria-hidden="true" tabindex="-1"></a>restgg<span class="ot">&lt;-</span><span class="fu">ggplot</span>(dat.prop.tot, <span class="fu">aes</span>(<span class="at">x=</span>day, <span class="at">y=</span>Act1 ,<span class="at">colour=</span>site)) <span class="sc">+</span> </span>
-<span id="cb82-14"><a href="#cb82-14" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.4</span>) <span class="sc">+</span></span>
-<span id="cb82-15"><a href="#cb82-15" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predrest),<span class="at">lwd=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb82-14"><a href="#cb82-14" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb82-15"><a href="#cb82-15" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predrest),<span class="at">lwd=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
 <span id="cb82-16"><a href="#cb82-16" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_ribbon</span>(<span class="at">data=</span> newdatall,</span>
 <span id="cb82-17"><a href="#cb82-17" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">ymin=</span> predrest<span class="sc">-</span>predrestSE, </span>
 <span id="cb82-18"><a href="#cb82-18" aria-hidden="true" tabindex="-1"></a>                <span class="at">ymax=</span> predrest<span class="sc">+</span>predrestSE, <span class="at">y=</span> <span class="cn">NULL</span>,</span>
@@ -727,7 +727,8 @@ day         -0.001439   0.007147  -0.201     0.84</code></pre>
 <span id="cb82-29"><a href="#cb82-29" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb82-30"><a href="#cb82-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>mycol) <span class="sc">+</span></span>
 <span id="cb82-31"><a href="#cb82-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>mycol)  <span class="sc">+</span></span>
-<span id="cb82-32"><a href="#cb82-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"none"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb82-32"><a href="#cb82-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_light</span>()<span class="sc">+</span></span>
+<span id="cb82-33"><a href="#cb82-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
 i Please use `linewidth` instead.</code></pre>
@@ -738,8 +739,8 @@ i Please use `linewidth` instead.</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
 <span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>forgg<span class="ot">&lt;-</span><span class="fu">ggplot</span>(dat.prop.tot, <span class="fu">aes</span>(<span class="at">x=</span>day, <span class="at">y=</span>Act2 ,<span class="at">colour=</span>site)) <span class="sc">+</span> </span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.4</span>) <span class="sc">+</span></span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predfor),<span class="at">lwd=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predfor),<span class="at">lwd=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
 <span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_ribbon</span>(<span class="at">data=</span> newdatall,</span>
 <span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">ymin=</span> predfor<span class="sc">-</span>predforSE, </span>
 <span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">ymax=</span> predfor<span class="sc">+</span>predforSE, <span class="at">y=</span> <span class="cn">NULL</span>,</span>
@@ -755,15 +756,16 @@ i Please use `linewidth` instead.</code></pre>
 <span id="cb85-17"><a href="#cb85-17" aria-hidden="true" tabindex="-1"></a>                       <span class="at">expand=</span><span class="fu">c</span>(<span class="fl">0.01</span>,<span class="dv">0</span>)) <span class="sc">+</span> </span>
 <span id="cb85-18"><a href="#cb85-18" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb85-19"><a href="#cb85-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>mycol) <span class="sc">+</span></span>
-<span id="cb85-20"><a href="#cb85-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>mycol)  <span class="sc">+</span></span>
-<span id="cb85-21"><a href="#cb85-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"none"</span>) </span>
-<span id="cb85-22"><a href="#cb85-22" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(forgg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb85-20"><a href="#cb85-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>mycol) <span class="sc">+</span></span>
+<span id="cb85-21"><a href="#cb85-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_light</span>()<span class="sc">+</span></span>
+<span id="cb85-22"><a href="#cb85-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"none"</span>)</span>
+<span id="cb85-23"><a href="#cb85-23" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(forgg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="4-HMM_files/figure-html/glmmTMB-12.png" class="img-fluid" width="672"></p>
 </div>
 <div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>flygg<span class="ot">&lt;-</span><span class="fu">ggplot</span>(dat.prop.tot, <span class="fu">aes</span>(<span class="at">x=</span>day, <span class="at">y=</span>Act3 ,<span class="at">colour=</span>site)) <span class="sc">+</span> </span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.4</span>) <span class="sc">+</span></span>
-<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predfly),<span class="at">lwd=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>newdatall,<span class="fu">aes</span>(<span class="at">x=</span>day,<span class="at">y=</span>predfly),<span class="at">lwd=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
 <span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_ribbon</span>(<span class="at">data=</span> newdatall,</span>
 <span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">ymin=</span> predfly<span class="sc">-</span>predflySE, </span>
 <span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">ymax=</span> predfly<span class="sc">+</span>predflySE, <span class="at">y=</span> <span class="cn">NULL</span>,</span>
@@ -778,9 +780,10 @@ i Please use `linewidth` instead.</code></pre>
 <span id="cb86-15"><a href="#cb86-15" aria-hidden="true" tabindex="-1"></a>                       <span class="at">breaks=</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.2</span>),</span>
 <span id="cb86-16"><a href="#cb86-16" aria-hidden="true" tabindex="-1"></a>                       <span class="at">expand=</span><span class="fu">c</span>(<span class="fl">0.01</span>,<span class="dv">0</span>)) <span class="sc">+</span> </span>
 <span id="cb86-17"><a href="#cb86-17" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb86-18"><a href="#cb86-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>mycol) <span class="sc">+</span></span>
-<span id="cb86-19"><a href="#cb86-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>mycol) </span>
-<span id="cb86-20"><a href="#cb86-20" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(flygg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb86-18"><a href="#cb86-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>mycol, <span class="at">name=</span><span class="st">"Colony"</span>) <span class="sc">+</span></span>
+<span id="cb86-19"><a href="#cb86-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>mycol, <span class="at">name=</span><span class="st">"Colony"</span>) <span class="sc">+</span></span>
+<span id="cb86-20"><a href="#cb86-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_light</span>()</span>
+<span id="cb86-21"><a href="#cb86-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(flygg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="4-HMM_files/figure-html/glmmTMB-13.png" class="img-fluid" width="672"></p>
 </div>
