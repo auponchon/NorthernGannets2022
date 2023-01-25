@@ -1,0 +1,376 @@
+---
+title: "Data processing Northern gannets Grassholm 2022"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+## 1- Importing data
+
+GPS data are stored as individual excel files. Some files has different column orders so this had to be accounted for in file extraction. Moreover, as dry/wet sensor data and locations are merged but have different time intervals, a lot of consecutive location duplicates are present. These are filtered directly when extracting data. Loggers were deployed in May 2022 but for the analysis, only data occurring after 10th August 2022 are retained to match data from Bass Rock and Rouzic.
+
+Distances and time between locations are calculated and a few variables are added to summarize time spent on land and at-sea. Raw data locations are visualized by some descriptive plots, especially to identify outliers in maximal distance and more importantly, time gaps.
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+library(here)
+library(forcats)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(sf)
+library(rgdal)
+library(kableExtra)
+library(conflicted)
+
+source(here("R","trip_functions.R"))
+source(here("R","extract_grassholm.R"))
+
+#import all files together
+files<-list.files(here("data","raw","grassholm"),
+                  pattern=".csv",
+                  full.names=T)
+
+starting<-as.POSIXct("2022-08-10 00:00:01", format="%F %H:%M:%S", tz="GMT")
+grassholm_raw<-data.frame()
+
+for (i in 1:length(files)){
+    temp<-extract_grassholm(files[i],starting)
+    grassholm_raw<-rbind(grassholm_raw,temp)
+    
+}
+
+grassholm_raw<-as.data.frame(grassholm_raw)
+
+  save(grassholm_raw,
+       file=here("data","raw","grassholm","gannets_grassholm_raw_2022.Rdata"))
+
+  load(here("data","raw","grassholm","gannets_grassholm_raw_2022.Rdata"))
+ ids<-unique(levels(grassholm_raw$id))
+colo.ind<-tim.colors(length(ids))
+
+
+#create new object with distance and time differences
+rawLoc.grassholm<-NULL
+
+#loop through each individual 
+for (i in 1:length(ids)){
+
+    
+    ind.loc<- grassholm_raw %>% 
+        dplyr::filter(id==ids[i]) %>% 
+        mutate(distmax=0,
+               distadj=0,
+               totalpath=0,
+               difftimemin=0,
+               travelNb=0,
+               onlandNb=0)
+  
+ #   print(c("Processing individual ", i))
+      
+  #loop through each line to calculate distance and time difference with previous location
+for (l in 2:nrow(ind.loc)){
+    
+ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   ind.loc[l-1,c("long","lat")], miles = F)
+ind.loc[l,"difftimemin"]<-difftime(ind.loc[l,"datetime"],
+                                   ind.loc[l-1,"datetime"], units="mins")
+ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   colo_coord_grassholm[c(1,2)], miles = F)
+}
+
+#define periods on land and at sea   
+ind.loc<-define_trips(data=ind.loc,dist.min=dist.threshold)
+rawLoc.grassholm<-rbind(rawLoc.grassholm,ind.loc)    
+}
+
+rawLoc.grassholm$trip.id<-paste(rawLoc.grassholm$id,
+                                rawLoc.grassholm$travelNb,
+                                sep=".")
+rawLoc.grassholm<-add_missing_return(rawLoc.grassholm,
+                                    time.int=reso,
+                                    colony=colo_coord_grassholm) %>% 
+                  dplyr::filter(distmax < 1000) #remove one outlier location
+
+save(rawLoc.grassholm,
+     file=here("data","NewlyCreatedData","rawLocgrassholm.Rdata"))
+
+load(here("data","NewlyCreatedData","rawLocgrassholm.Rdata"))
+
+distraw<-ggplot(rawLoc.grassholm,aes(x=datetime,y=distmax),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+  #  scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+diffraw<-ggplot(rawLoc.grassholm,aes(x=datetime,y=difftimemin),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+  #  scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Time gaps between 2 locations (in min)")
+
+grid.arrange(distraw,diffraw, ncol=2,
+             top = textGrob("Raw data",gp=gpar(fontsize=16,font=3)))
+
+
+
+#summarize all trips and periods on land by individuals
+raw_trips_grassholm<-trips_summary_ind(rawLoc.grassholm,colony=colo_coord_grassholm)
+raw_land_grassholm<-land_summary_ind(rawLoc.grassholm,colony=colo_coord_grassholm)
+
+
+summy.trips<-raw_trips_grassholm %>% 
+    group_by(id) %>% 
+    summarize(Nbtrip=n(),
+              Mindurh=min(TripDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual trips
+# kbl(summy.trips,caption="Summary of raw trips") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+summy.land<-raw_land_grassholm %>% 
+    group_by(id) %>% 
+    summarize(Nbland=n(),
+              Mindurh=min(LandDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual on land periods
+# kbl(summy.land,caption="Summary of periods on land") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+##plot trip and land periods
+dist<-ggplot(raw_trips_grassholm,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+  #  scale_y_continuous(limits=c(0,500)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="maximal distance to colony (km)")
+
+dur<-ggplot(raw_trips_grassholm,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+ #   scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h)")
+
+correl<-ggplot(raw_trips_grassholm,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+
+land<-ggplot(raw_land_grassholm,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id)) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+grid.arrange(dist,dur,correl,land, nrow=2,ncol=2,
+             top = textGrob("Raw trips",gp=gpar(fontsize=16,font=3)))
+
+#remove incomplete and short trips based on fixed thresholds
+clean.trip.nb<-raw_trips_grassholm %>%
+     dplyr::filter(TripDurh > dur.thres & nlocs >= row.thres & TotalPathkm>0 &
+                       maxDiffTimeh < 10) 
+
+cleanLocs.grassholm<-rawLoc.grassholm %>%
+    dplyr::filter(rawLoc.grassholm$trip.id %in% 
+                      clean.trip.nb$trip.id)
+
+cleanlandsgrass<-raw_land_grassholm %>% 
+    dplyr::filter(LandDurh > 1 & id!="9006") 
+
+save(cleanLocs.grassholm,
+     file=here("data","NewlyCreatedData","clean_locs_grassholm.Rdata"))
+
+remove(ind.loc,locs.grassholm,serol.grassholm,dist,dur,diffloc,distloc,correl)
+
+ SPDF <- SpatialPointsDataFrame(coords = cleanLocs.grassholm[,c("long","lat")], 
+                                data = cleanLocs.grassholm,
+                               proj4string = CRS(wgscrs))
+ writeOGR(SPDF, 
+          dsn=here("data","NewlyCreatedData","shapefiles"), 
+          layer="clean_trips_raw_gannets_grassholm", 
+          driver="ESRI Shapefile", 
+          overwrite_layer =T)
+
+```
+
+## 2- Interpolation
+
+As data has irregular time intervals between consecutive locations, data are linearly interpolated to have one location every 15min. Each raw trip is compared with interpolations. Migration bounds do not seem to be recorded
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+load(here("data","NewlyCreatedData","rawLocgrassholm.Rdata"))
+load(here("data","NewlyCreatedData","clean_locs_grassholm.Rdata"))
+library(rnaturalearth)
+
+##Interpolation
+loc.interp.grassholm<-interpol_pastecs(data=cleanLocs.grassholm,
+                           time.int=reso,
+                           colony=colo_coord_grassholm)
+
+#incomplete trips due to data cut
+bad.trips<-c("9003.1","9005.1","9006.1")
+     
+ loc.interp.grassholm<-loc.interp.grassholm %>% 
+    dplyr::filter(!trip.id %in% bad.trips) %>% 
+    droplevels()
+
+save(loc.interp.grassholm,
+     file=here("Data","NewlyCreatedData","loc_clean_interp_grassholm.RData"))
+
+##Ilustrate interpolations with raw data
+
+longmn=-9
+longmx=-4
+latmn=49
+latmx=54
+
+#crop polygon shapefile to the study area
+world <- ne_countries(scale = 50, returnclass = 'sf')
+colo_sf_grassholm<-st_as_sf(colo_coord_grassholm,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+europe <- c("Belgium","Denmark","France","United Kingdom",
+                   "Germany","Ireland","Netherlands",
+                   "Portugal","Spain","Sweden")
+europe_map <-
+    world %>%
+    dplyr::filter(name %in% europe)
+
+
+for (a in 1:length(ids)){
+    raw<-cleanLocs.grassholm %>%
+        dplyr::filter(id==ids[a]) %>%
+        st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+         interp.ind<-loc.interp.grassholm %>%
+        dplyr::filter(id==ids[a]) %>%
+     st_as_sf(.,
+           coords = c("long", "lat"),
+           crs = wgscrs)
+
+##Ilustrate interpolations with raw data
+longmin=floor(st_bbox(interp.ind)[1])
+longmax=ceiling(st_bbox(interp.ind)[3])
+latmin=floor(st_bbox(interp.ind)[2])
+latmax=ceiling(st_bbox(interp.ind)[4])
+
+
+mapa<-ggplot(data = europe_map) +
+    geom_sf(fill="grey") +
+     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+     geom_sf(data = raw, shape = 17, colour = "black",size=0.8) +
+    geom_sf(data = colo_sf_grassholm, shape = 15, colour = "orange") +
+      coord_sf(xlim = c(longmn,longmx), ylim = c(latmn, latmx), expand = FALSE) +
+    labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
+print(mapa)
+
+tp<-unique(raw$trip.id)
+
+ #plot each trip individually (help identify trips to exclude)  
+# for (b in 1:length(tp)) {
+#     trp<-raw %>%
+#         dplyr::filter(trip.id ==tp[b] & travelNb!=0)
+# 
+#     intr<-interp.ind %>%
+#         dplyr::filter(trip.id==tp[b])
+# 
+#     xmmin<-min(c(st_bbox(raw)[1],st_bbox(intr)[1]))
+#    xmmax<-max(c(st_bbox(raw)[3],st_bbox(intr)[3]))
+#     ymmin<-min(c(st_bbox(raw)[2],st_bbox(intr)[2]))
+#     ymmax<-max(c(st_bbox(raw)[4],st_bbox(intr)[4]))
+# 
+#    raw_lines <- trp %>%
+#        dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+#   dplyr::summarise(do_union = FALSE) %>%
+#   sf::st_cast("MULTILINESTRING")
+# 
+#      int_lines <-   intr %>%
+#          dplyr::group_by(trip.id) %>% # and year, month, etc as needed
+#   dplyr::summarise(do_union = FALSE) %>%
+#   sf::st_cast("MULTILINESTRING")
+# 
+# jpeg(filename = here("outputs","clean_trips",paste("grassholm",tp[b],"pastecs.jpg",sep="_")),
+#      res=200,units="cm",width=15,height=15)
+#    ma<-ggplot(data = europe_map) +
+#  #   geom_sf(fill="grey") +
+#     coord_sf(xlim = c(xmmin,xmmax), ylim = c(ymmin,ymmax), expand = FALSE) +
+#      geom_sf(data = intr, shape = 16, colour = colo.ind[a],size=1.2) +
+#      geom_sf(data = trp, shape = 17, colour = "black",size=1.5) +
+#     geom_sf(data = colo_sf_grassholm, shape = 15, colour = "orange") +
+#      geom_sf(data=int_lines,colour=colo.ind[a]) +
+#   #   geom_sf(data=raw_lines,colour="black") +
+#     labs(title =  tp[b])
+#  print(ma)
+#  dev.off()
+# }
+ }
+# 
+
+
+```
+
+## 3- Summary of clean trips
+
+At-sea trips retained are at least \>1h long, \>1km from the colony, have more than 4 locations and have time gaps shorter than 10h.
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+load(here("Data","NewlyCreatedData","loc_clean_interp_grassholm.RData"))
+
+trips.interp<-loc.interp.grassholm %>% 
+   trips_summary_ind(.,colony=colo_coord_grassholm) %>% 
+  #  dplyr::filter(Distmaxkm < 300) %>% 
+    mutate(day=match(format(DateEnd,format="%F"), 
+                     unique(format(DateEnd,format="%F"))))
+
+##plot trip and land periods
+cleandist<-ggplot(trips.interp,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+ #   scale_y_continuous(limits=c(0,300)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+cleandur<-ggplot(trips.interp,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+#    scale_y_continuous(limits=c(0,100)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h)")
+
+
+correl<-ggplot(trips.interp,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+land<-ggplot(cleanlandsgrass,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id)) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+
+grid.arrange(cleandist,cleandur,correl,land, ncol=2,nrow=2,
+             top = textGrob("Clean data",gp=gpar(fontsize=16,font=3)))
+
+```

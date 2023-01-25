@@ -13,7 +13,10 @@ projcrs<-"+proj=utm +zone=30 +ellps=WGS84"
 colo_coord_rouzic<-data.frame(long=-3.436752, lat=48.899868,name="Rouzic")
 #Coordinates of Bass Rock colony (Scotland)
 colo_coord_bassrock<-data.frame(long=-2.641272, lat=56.077072,name="Bass Rock")
-start<-as.POSIXct("2022-08-11 08:00:00",format="%F %H:%M:%S",tz="GMT") #remove positions onland before deployment
+#Coordinates for Grassholm (England)
+colo_coord_grassholm<-data.frame(long=-5.4803, lat=51.731286, name="Grassholm")
+
+start<-as.POSIXct("2022-08-11 08:00:00",format="%F %H:%M:%S",tz="GMT") #remove positions onland before deployment for bassrock
 
 
 #Time resolution for interpolation

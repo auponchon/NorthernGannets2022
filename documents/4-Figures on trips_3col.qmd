@@ -1,0 +1,737 @@
+---
+title: "Trip characteristics with LMM"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+## Plots with LME predictions
+
+Linear mixed models are applied on trip charateristics to test whether individuals change their spatial behaviour over time. Models are fitted on each colony separately.
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+library(here)
+library(tidyverse)
+library(wesanderson)
+library(gridExtra)
+library(nlme)
+library(emmeans)
+library(DHARMa)
+library(kableExtra)
+library(plotrix)
+
+source(here("R","trip_functions.R"))
+
+#bassrock for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
+trips.bassrock<-trips_summary_ind(loc.interp.bassrock,
+                                  colony=colo_coord_bassrock)
+#bassrock for nest attendance
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
+land.bassrock<-rawLoc.bassrock %>% 
+    land_summary_ind(.,colony=colo_coord_bassrock) %>% 
+    dplyr::filter(LandDurh > 1) 
+
+#rouzic for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+trips.rouzic<-trips_summary_ind(loc.interp.rouzic,
+                                colony=colo_coord_rouzic)
+#rouzic for nest attendance
+load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+land.rouzic<-rawLoc.rouzic %>% 
+    land_summary_ind(.,colony=colo_coord_rouzic) %>% 
+    dplyr::filter(LandDurh > 1 & id!="222278") 
+
+#grassholm for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_grassholm.RData"))
+trips.grass<-trips_summary_ind(loc.interp.grassholm,
+                               colony=colo_coord_grassholm)
+#grassholm for nest attendance
+load(here("data","NewlyCreatedData","rawLocGrassholm.Rdata"))
+land.grass<-rawLoc.grassholm %>% 
+    land_summary_ind(.,colony=colo_coord_grassholm) %>% 
+    dplyr::filter(LandDurh > 1 & id!="9006") 
+
+ #calculate day number for all 3 colonies
+ trips<-trips.bassrock %>% 
+        rbind(trips.rouzic, trips.grass) %>% 
+       mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
+
+trips.bassrock<-trips %>% 
+    dplyr::filter(site=="Bass Rock")
+trips.rouzic<-trips %>% 
+     dplyr::filter(site=="Rouzic")
+trips.grass<-trips %>% 
+     dplyr::filter(site=="Grassholm")
+
+ #calculate day number for all 3 colonies
+lands<-land.bassrock %>% 
+    rbind(land.rouzic,land.grass ) %>% 
+    mutate(day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10")))
+
+land.bassrock<-lands %>% 
+    dplyr::filter(site=="Bass Rock")
+land.rouzic<-lands %>% 
+     dplyr::filter(site=="Rouzic")
+land.grass<-lands %>% 
+     dplyr::filter(site=="Grassholm")
+
+#Table summary
+sum.ids<-trips %>% 
+    group_by(site) %>% 
+    summarize(Ids=length(unique(id)),
+              Trips=length(unique(trip.id)),
+              Debut=min(DateEnd),
+              Fin=max(DateEnd))
+  
+kbl(sum.ids,caption="Sample size for trips") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+sum.id<- trips %>% 
+    group_by(site,id) %>% 
+    summarize(across(c(Distmaxkm, TripDurh, TotalPathkm), 
+                     ~ mean(.x, na.rm = TRUE))) %>% 
+    as.data.frame()
+
+sum.trips<- sum.id %>% 
+    group_by(site) %>% 
+    summarize(across(where(is.numeric), 
+                     list(mean=mean,
+                          se=std.error))) %>% 
+    mutate(across(where(is.numeric), round,digits=0))
+
+lands.ids<-lands %>% 
+    group_by(site) %>% 
+    summarize(Ids=length(unique(id)),
+              Land=length(unique(onland.id)),
+              Debut=min(DateEnd),
+              Fin=max(DateEnd))
+
+kbl(lands.ids,caption="Sample size for periods on land") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+land.id<- lands %>% 
+    group_by(site,id) %>% 
+    summarize(Time= mean(LandDurh, na.rm=T)) %>% 
+    as.data.frame()
+
+sum.lands<- land.id %>% 
+    group_by(site) %>% 
+    summarize(across(where(is.numeric), 
+                     list(mean=mean,
+                          se=std.error))) %>% 
+    mutate(across(where(is.numeric), round,digits=0))
+
+kbl(sum.trips,caption="Summary of trip characteristics",
+    col.names=c("Colony","DistmaxMean","DistmaxSE","TripDurMean",
+                "TripDurSE","TotPathMean","TotPathSE")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(sum.lands,caption="Summary of nest attendance",
+    col.names=c("Colony","DurationMean","DurationSE")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+mycol<-wes_palette("FantasticFox1")
+
+
+daysx<-c("10/08","20/08","30/08","09/09","19/09","29/09","09/10")
+newdatrouz<-expand.grid(site=unique(trips.rouzic$site),
+                    day=seq(min(trips.rouzic$day),
+                            max(trips.rouzic$day),1))
+
+newdatbass<-expand.grid(site=unique(trips.bassrock$site),
+                    day=seq(min(trips.bassrock$day),
+                            max(trips.bassrock$day),1))
+
+newdatgrass<-expand.grid(site=unique(trips.grass$site),
+                    day=seq(min(trips.grass$day),
+                            max(trips.grass$day),1))
+
+
+```
+
+## 1. Test of maximal distance to the colony over time
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#plot with separate datasets maximal distance to the colony
+glmm.dist.lme.rouzic<-lme(log(Distmaxkm) ~ day, 
+                          random=~1 | id , 
+                          data=trips.rouzic)
+
+glmm.dist.lme.bassrock<-lme(log(Distmaxkm) ~ day, 
+                            random=~1 | id , 
+                            data=trips.bassrock)
+
+glmm.dist.lme.grass<-lme(log(Distmaxkm) ~ day, 
+                            random=~1 | id , 
+                            data=trips.grass)
+
+ggplot(trips.rouzic,aes(x=day,y=Distmaxkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    ggtitle("Maximal distance per trip over time by individual")
+
+```
+
+### 1.1. Rouzic
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+summary(glmm.dist.lme.rouzic)
+anova(glmm.dist.lme.rouzic)
+
+qqnorm(resid(glmm.dist.lme.rouzic))
+qqline(resid(glmm.dist.lme.rouzic))
+
+
+```
+
+### 1.2. Bass Rock
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+ggplot(trips.bassrock,aes(x=day,y=Distmaxkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,1000)) +
+    ggtitle("Maximal distance per trip over time by individual")
+
+
+summary(glmm.dist.lme.bassrock)
+anova(glmm.dist.lme.bassrock)
+
+qqnorm(resid(glmm.dist.lme.bassrock))
+qqline(resid(glmm.dist.lme.bassrock))
+
+```
+
+### 1.3. Grassholm
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+ggplot(trips.grass,aes(x=day,y=Distmaxkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,500)) +
+    ggtitle("Maximal distance per trip over time by individual")
+
+summary(glmm.dist.lme.grass)
+anova(glmm.dist.lme.grass)
+
+qqnorm(resid(glmm.dist.lme.grass))
+qqline(resid(glmm.dist.lme.grass))
+
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.dist.lme.rouzic, 
+                         newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.dist.lme.bassrock, 
+                         newdata=newdatbass,level=0)
+newdatgrass$pred<-predict(glmm.dist.lme.grass, 
+                          newdata=newdatgrass,level=0)
+grouz <- ref_grid(glmm.dist.lme.rouzic, 
+                  cov.keep= c('day'))
+gbass <- ref_grid(glmm.dist.lme.bassrock, 
+                  cov.keep= c('day'))
+ggrass <- ref_grid(glmm.dist.lme.grass, 
+                   cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, 
+                              spec= c('day'), 
+                              level= 0.95),
+                              site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, 
+                              spec= c('day'), 
+                              level= 0.95),
+                              site="Bass Rock")
+emmgrass <- data.frame(emmeans(ggrass, 
+                               spec= c('day'), 
+                               level= 0.95),
+                               site="Grassholm")
+
+
+newdatall<-rbind(newdatbass,newdatrouz,newdatgrass)
+emm<-rbind(emmbass,emmrouz,emmgrass)
+
+
+```
+
+### 1.4. Prediction of maximal distance for all 3 colonies
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+#| 
+distgg<-ggplot(trips, aes(x=day, y=Distmaxkm ,colour=site)) + 
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
+    scale_x_continuous(limits=c(0,65),
+                       labels=daysx,
+                       breaks=seq(0,65,10),
+                       expand=c(0.001,0.05)) +
+    scale_y_continuous(limits=c(0,700,100),
+                       breaks=seq(0,700,100),
+                       expand=c(0.01,0)) + 
+ scale_colour_manual(values=mycol) +
+ scale_fill_manual(values=mycol)  +
+     theme_light()+
+    theme(legend.position="none") 
+print(distgg) 
+```
+
+## 2. Test on trip duration
+
+### 2.1. Rouzic
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#plot with separate datasets trip duration
+glmm.dur.lme.rouzic<-lme(log(TripDurh) ~ day, 
+                         random=~1 | id , 
+                         data=trips.rouzic)
+glmm.dur.lme.bassrock<-lme(log(TripDurh) ~ day, 
+                           random=~1 | id , 
+                           data=trips.bassrock)
+glmm.dur.lme.grass<-lme(log(TripDurh) ~ day, 
+                        random=~1 | id , 
+                        data=trips.grass)
+
+ggplot(trips.rouzic,aes(x=day,y=TripDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+ #   scale_y_continuous(limits=c(0,250)) +
+    ggtitle("Trip duration over time by individual")
+
+summary(glmm.dur.lme.rouzic)
+anova(glmm.dur.lme.rouzic)
+
+qqnorm(resid(glmm.dur.lme.rouzic))
+qqline(resid(glmm.dur.lme.rouzic))
+
+```
+
+### 2.2. Bass Rock
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+ggplot(trips.bassrock,aes(x=day,y=TripDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,150)) +
+    ggtitle("Trip duration over time by individual")
+
+
+summary(glmm.dur.lme.bassrock)
+anova(glmm.dur.lme.bassrock)
+
+qqnorm(resid(glmm.dur.lme.bassrock))
+qqline(resid(glmm.dur.lme.bassrock))
+```
+
+### 2.3. Grassholm
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+ggplot(trips.grass,aes(x=day,y=TripDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,100)) +
+    ggtitle("Trip duration over time by individual")
+
+
+summary(glmm.dur.lme.grass)
+anova(glmm.dur.lme.grass)
+
+qqnorm(resid(glmm.dur.lme.grass))
+qqline(resid(glmm.dur.lme.grass))
+
+```
+
+### 2.4. Prediction of trip duration over time for all 3 colonies
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.dur.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.dur.lme.bassrock, newdata=newdatbass,level=0)
+newdatgrass$pred<-predict(glmm.dur.lme.grass, newdata=newdatgrass,level=0)
+grouz <- ref_grid(glmm.dur.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.dur.lme.bassrock, cov.keep= c('day'))
+ggrass <- ref_grid(glmm.dur.lme.grass, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+emmgrass <- data.frame(emmeans(ggrass, spec= c('day'), level= 0.95),
+                      site="Grassholm")
+
+newdatall<-rbind(newdatbass,newdatrouz,newdatgrass)
+emm<-rbind(emmbass,emmrouz, emmgrass)
+
+durgg<-ggplot(trips, aes(x=day, y=TripDurh ,colour=site)) + 
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Trip Duration (h)",tag="b)",x="") +
+    scale_x_continuous(limits=c(0,65),
+                       labels=daysx,
+                       breaks=seq(0,65,10),
+                       expand=c(0.001,0.01)) +
+    scale_y_continuous(limits=c(0,200),
+                       breaks=seq(0,200,50),
+                       expand=c(0.001,0)) +
+    
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme_light()+
+    theme(legend.position="none") 
+    
+print(durgg)
+
+```
+
+## 3. Test on total distance travelled
+
+### 3.1. Rouzic
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+#plot with separate datasets trip duration
+glmm.path.lme.rouzic<-lme(log(TotalPathkm) ~ day, 
+                          random=~1 | id , 
+                          data=trips.rouzic)
+glmm.path.lme.bassrock<-lme(log(TotalPathkm) ~ day, 
+                            random=~1 | id , 
+                            data=trips.bassrock)
+glmm.path.lme.grass<-lme(log(TotalPathkm) ~ day, 
+                            random=~1 | id , 
+                            data=trips.grass)
+
+ggplot(trips.rouzic,aes(x=day,y=TotalPathkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+ #   scale_y_continuous(limits=c(0,100)) +
+    ggtitle("Total distance travelled per trip over time by individual")
+
+
+summary(glmm.path.lme.rouzic)
+anova(glmm.path.lme.rouzic)
+
+qqnorm(resid(glmm.path.lme.rouzic))
+qqline(resid(glmm.path.lme.rouzic))
+
+```
+
+### 3.2. Bass Rock
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+ggplot(trips.bassrock,aes(x=day,y=TotalPathkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,2000)) +
+    ggtitle("Total distance travelled per trip over time by individual")
+
+summary(glmm.path.lme.bassrock)
+anova(glmm.path.lme.bassrock)
+
+qqnorm(resid(glmm.path.lme.bassrock))
+qqline(resid(glmm.path.lme.bassrock))
+
+```
+
+### 3.3. Grassholm
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+ggplot(trips.grass,aes(x=day,y=TotalPathkm,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,1000)) +
+    ggtitle("Total distance travelled per trip over time by individual")
+
+summary(glmm.path.lme.grass)
+anova(glmm.path.lme.grass)
+
+qqnorm(resid(glmm.path.lme.grass))
+qqline(resid(glmm.path.lme.grass))
+
+```
+
+### 3.4. Prediction of total distance travelled over time for all 3 colonies
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#predict fitted values and CI
+newdatrouz$pred<-predict(glmm.path.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.path.lme.bassrock, newdata=newdatbass,level=0)
+newdatgrass$pred<-predict(glmm.path.lme.grass, newdata=newdatgrass,level=0)
+grouz <- ref_grid(glmm.path.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.path.lme.bassrock, cov.keep= c('day'))
+ggrass <- ref_grid(glmm.path.lme.grass, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+emmgrass <- data.frame(emmeans(ggrass, spec= c('day'), level= 0.95),
+                      site="Grassholm")
+
+newdatall<-rbind(newdatbass,newdatrouz,newdatgrass)
+emm<-rbind(emmbass,emmrouz,emmgrass )
+
+pathgg<-ggplot(trips, aes(x=day, y=TotalPathkm ,colour=site)) + 
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
+geom_ribbon(data= emm, 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Total distance travelled (km)",tag="c)",x="") +
+    scale_x_continuous(limits=c(0,65),
+                       labels=daysx,
+                       breaks=seq(0,65,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,1750),
+                       breaks=seq(0,1500,500),
+                       expand=c(0.001,0)) +
+
+  scale_colour_manual(values=mycol) +
+    scale_fill_manual(values=mycol)  +
+    theme_light()+
+    theme(legend.position="none") 
+    
+print(pathgg)
+
+```
+
+## 4. Test on time spent in the colony
+
+### 4.1. Rouzic
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#plot with separate datasets time spend on land
+glmm.land.lme.rouzic<-lme(log(LandDurh) ~ day, 
+                          random=~1 | id , 
+                          data=land.rouzic)
+glmm.land.lme.bassrock<-lme(log(LandDurh) ~ day, 
+                            random=~1 | id , 
+                            data=land.bassrock)
+glmm.land.lme.grass<-lme(log(LandDurh) ~ day, 
+                          random=~1 | id , 
+                          data=land.grass)
+
+ggplot(land.rouzic,aes(x=day,y=LandDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,60)) +
+    ggtitle("Time spent in the colony over time by individual")
+
+
+summary(glmm.land.lme.rouzic)
+anova(glmm.land.lme.rouzic)
+
+qqnorm(resid(glmm.land.lme.rouzic))
+qqline(resid(glmm.land.lme.rouzic))
+```
+
+### 4.2. Bass Rock
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+ggplot(land.bassrock,aes(x=day,y=LandDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,60)) +
+    ggtitle("Time spent in the colony over time by individual")
+
+
+summary(glmm.land.lme.bassrock)
+anova(glmm.land.lme.bassrock)
+
+qqnorm(resid(glmm.land.lme.bassrock))
+qqline(resid(glmm.land.lme.bassrock))
+```
+
+### 4.3. Grassholm
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+ggplot(land.grass,aes(x=day,y=LandDurh,
+                               colour=id))+
+    geom_point()+
+    geom_smooth(method="lm",alpha=0.2) +
+    scale_y_continuous(limits=c(0,60)) +
+    ggtitle("Time spent in the colony over time by individual")
+
+
+summary(glmm.land.lme.grass)
+anova(glmm.land.lme.grass)
+
+qqnorm(resid(glmm.path.lme.grass))
+qqline(resid(glmm.path.lme.grass))
+```
+
+### 4.4. Prediction of periods spent in the colony over time for all 3 colonies
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+#| 
+#predict fitted values and CI
+# New datasets are recreated because day limits are different than for trips
+
+newdatrouz<-expand.grid(site=unique(land.rouzic$site),
+                    day=seq(min(land.rouzic$day),
+                            max(land.rouzic$day),1))
+
+newdatbass<-expand.grid(site=unique(land.bassrock$site),
+                    day=seq(min(land.bassrock$day),
+                            max(land.bassrock$day),1))
+
+newdatgrass<-expand.grid(site=unique(land.grass$site),
+                    day=seq(min(land.grass$day),
+                            max(land.grass$day),1))
+
+newdatrouz$pred<-predict(glmm.land.lme.rouzic, newdata=newdatrouz,level=0)
+newdatbass$pred<-predict(glmm.land.lme.bassrock, newdata=newdatbass,level=0)
+newdatgrass$pred<-predict(glmm.land.lme.grass, newdata=newdatgrass,level=0)
+grouz <- ref_grid(glmm.land.lme.rouzic, cov.keep= c('day'))
+gbass <- ref_grid(glmm.land.lme.bassrock, cov.keep= c('day'))
+ggrass <- ref_grid(glmm.land.lme.grass, cov.keep= c('day'))
+emmrouz <- data.frame(emmeans(grouz, spec= c('day'), level= 0.95),
+                      site="Rouzic")
+emmbass <- data.frame(emmeans(gbass, spec= c('day'), level= 0.95),
+                      site="Bass Rock")
+
+emmgrass <- data.frame(emmeans(ggrass, spec= c('day'), level= 0.95),
+                      site="Grassholm")
+
+newdatall<-rbind(newdatbass,newdatrouz,newdatgrass)
+emm<-rbind(emmbass,emmrouz,emmgrass)
+
+durlandgg<-ggplot(lands, aes(x=day, y=LandDurh ,colour=site)) + 
+geom_point(alpha=0.6) +
+ geom_line(data=newdatall,aes(x=day,y=exp(pred)),lwd=1.5) +
+geom_ribbon(data= data.frame(emm), 
+            aes(ymin= exp(lower.CL), ymax= exp(upper.CL), y= NULL,fill=site), 
+            alpha=0.4,colour = NA) +
+     labs(y="Time attending the colony (h)",tag="d)",x="") +
+    scale_x_continuous(limits=c(-1,65),
+                       labels=daysx,
+                       breaks=seq(0,65,10),
+                       expand=c(0.0001,0.01)) +
+    scale_y_continuous(limits=c(0,60),
+                       breaks=seq(0,60,10),
+                       expand=c(0.001,0)) +
+  
+  scale_colour_manual(values=mycol,name="Colony") +
+    scale_fill_manual(values=mycol,name="Colony")  +
+     theme_light()
+    
+    
+print(durlandgg)
+
+mylegend<-g_legend(durlandgg)
+
+tiff(here("outputs","Figure_LMM_trips_3col.tif"),
+     width=7000,
+     height=4000,
+     res=600,
+     compression="lzw")
+grid.arrange(arrangeGrob(distgg,
+                         durgg,
+                         pathgg,
+                         durlandgg+ theme(legend.position="none") ,
+                                     ncol=2),
+               mylegend, ncol=2,widths=c(1,0.1)) 
+
+    dev.off()     
+```

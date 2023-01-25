@@ -1,5 +1,5 @@
 ---
-title: "Northern gannets Bass Rock 2022"
+title: "Data processing \nNorthern gannets Bass Rock 2022"
 author: "Aurore Ponchon"
 format: html
 editor: visual
@@ -7,7 +7,9 @@ editor: visual
 
 ## 1- Importing data
 
-GPS data are stored as individual excel files w. I calculated distances and time between locations and added a few variables to summarize time spent on land and at-sea. I illustrate the raw data locations by some descriptive plots.
+GPS data are stored as individual excel files. Note that 1 individual (18271) is an immature and is excluded from analysis.
+
+Distances and time between locations and a few other variables are added to summarize time spent on land and at-sea. Raw data locations are visualized by some descriptive plots, especially to identify outliers in maximal distance and more importantly, time gaps.
 
 ```{r}
 #| echo: false
@@ -18,7 +20,7 @@ library(here)
 library(forcats)
 library(tidyverse)
 library(ggplot2)
-library(viridis)
+library(grid)
 library(gridExtra)
 library(sf)
 library(rgdal)
@@ -37,10 +39,14 @@ tags <- data.frame(id=sub("_.*","",tags),
 
 
 bassrock_raw<-files %>% 
-    map_dfr(read.table, header=F, sep="," , skip = 5, .id = "filepath" ) %>% 
+    map_dfr(read.table, 
+            header=F, 
+            sep="," , 
+            skip = 5, 
+            .id = "filepath" ) %>% 
     bind_rows() %>% 
     rename(tag=filepath,
-        Day = V1,
+           Day = V1,
            Month = V2,
            Year = V3,
            Hour = V4,
@@ -51,7 +57,8 @@ bassrock_raw<-files %>%
            lat=V9,
            long=V10,
            alt = V11) %>% 
-    left_join(tags, by ="tag") %>% 
+    left_join(tags, 
+              by ="tag") %>% 
     mutate(datetime=as.POSIXct(strptime(paste(paste(Year,Month,Day,sep="-"),
                           paste(Hour,Min,Sec,sep=":"),
                           sep=" "),format="%y-%m-%d %H:%M:%S"),"GMT"),
@@ -59,21 +66,30 @@ bassrock_raw<-files %>%
            speed=0,
            site=as.factor("Bass Rock"),
             sero=NA) %>% 
-    dplyr::filter(lat!=0 & alt!=0 & datetime > start & id!="18271") %>% 
+    dplyr::filter(lat!=0 & alt!=0 & 
+                      datetime > start & 
+                      id!="18271") %>% #this individual is an immature
     dplyr::select(id,datetime,long,lat,alt,speed,site,sero) %>% 
     arrange(id,datetime) %>% 
     distinct(id,datetime, .keep_all= TRUE) %>% 
     droplevels()
 
-  save(bassrock_raw,file=here("data","raw","bass_rock","gannets_bassrock_raw_2022.Rdata"))
+  save(bassrock_raw,
+       file=here("data","raw","bass_rock","gannets_bassrock_raw_2022.Rdata"))
  
   
   SPDF <- SpatialPointsDataFrame(coords = bassrock_raw[,c("long","lat")], 
                                  data = bassrock_raw,
                                proj4string = CRS(projcrs))
 
- writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="all_raw_gannets_bassrock", driver="ESRI Shapefile", overwrite_layer =T)
+ writeOGR(SPDF, 
+          dsn=here("data","NewlyCreatedData","shapefiles"), 
+          layer="all_raw_gannets_bassrock", 
+          driver="ESRI Shapefile", 
+          overwrite_layer =T)
 
+ load(here("data","raw","bass_rock","gannets_bassrock_raw_2022.Rdata"))
+ 
  ids<-unique(levels(bassrock_raw$id))
 colo.ind<-tim.colors(length(ids))
 
@@ -115,34 +131,39 @@ rawLoc.bassrock<-add_missing_return(rawLoc.bassrock,
                                     time.int=reso,
                                     colony=colo_coord_bassrock)
 
-save(rawLoc.bassrock,file=here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
+save(rawLoc.bassrock,
+     file=here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 
-
-load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
-
-#Plot locations
-distloc<-ggplot(rawLoc.bassrock,aes(x=datetime,y=distmax),group=id)+
+distraw<-ggplot(rawLoc.bassrock,aes(x=datetime,y=distmax),group=id)+
     geom_point(aes(color=id),show.legend=F) +
-     geom_line(aes(color=id),show.legend=F,size=0.8) +
-#    scale_y_continuous(limits=c(0,400)) +
+  #  scale_y_continuous(limits=c(0,200)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Maximal distance to colony (km)")
 
-diffloc<-ggplot(rawLoc.bassrock,aes(x=datetime,y=difftimemin/60),group=id)+
+diffraw<-ggplot(rawLoc.bassrock,aes(x=datetime,y=difftimemin),group=id)+
     geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,5000)) +
     scale_color_manual(values=colo.ind)+
-    labs(x="Date",y="Time gaps (h)")
+    labs(x="Date",y="Time gaps between 2 locations (in min)")
 
-grid.arrange(distloc,diffloc,ncol=2)
+grid.arrange(distraw,diffraw, ncol=2,
+             top = textGrob("Raw data",gp=gpar(fontsize=16,font=3)))
+
+
+```
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 
 #summarize all trips and periods on land by individuals
 raw_trips_bassrock<-trips_summary_ind(rawLoc.bassrock,colony=colo_coord_bassrock)
 raw_land_bassrock<-land_summary_ind(rawLoc.bassrock,colony=colo_coord_bassrock)
 
-# write.csv(raw_trips_bassrock,file=here("data","NewlyCreatedData","raw_trips_summary_bassrock.csv"),
-#           row.names = F,quote=F)
-# write.csv(raw_land_bassrock,file=here("data","NewlyCreatedData","raw_land_summary_bassrock.csv"),
-#           row.names = F,quote=F)
 
 summy.trips<-raw_trips_bassrock %>% 
     group_by(id) %>% 
@@ -151,6 +172,7 @@ summy.trips<-raw_trips_bassrock %>%
               maxDiffh=max(maxDiffTimeh),
               minLocs=min(nlocs))
 
+#details individual trips
 # kbl(summy.trips,caption="Summary of raw trips") %>%
 #   kable_styling(bootstrap_options = c("striped", "hover"))
 
@@ -162,6 +184,7 @@ summy.land<-raw_land_bassrock %>%
               maxDiffh=max(maxDiffTimeh),
               minLocs=min(nlocs))
 
+#details individual on land periods
 # kbl(summy.land,caption="Summary of periods on land") %>%
 #   kable_styling(bootstrap_options = c("striped", "hover"))
 
@@ -178,41 +201,52 @@ dur<-ggplot(raw_trips_bassrock,aes(x=DateEnd,y=TripDurh ),group=id)+
  #   scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Trip duration (h)")
-grid.arrange(dist,dur,ncol=2)
 
 correl<-ggplot(raw_trips_bassrock,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
-print(correl)
 
 land<-ggplot(raw_land_bassrock,aes(x=DateEnd,y=LandDurh ),group=id)+
     geom_point(aes(color=id)) +
   #  scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Periods on land (h)")
-print(land)
+grid.arrange(dist,dur,correl,land, ncol=2,nrow=2,
+             top = textGrob("Raw trips",gp=gpar(fontsize=16,font=3)))
 
+#remove incomplete and short trips based on fixed thresholds
 clean.trip.nb<-raw_trips_bassrock %>%
-     dplyr::filter(TripDurh > dur.thres & nlocs >= row.thres) 
+     dplyr::filter(TripDurh > dur.thres & 
+                       nlocs >= row.thres) 
 
 cleanLocs.bassrock<-rawLoc.bassrock %>%
-    dplyr::filter(rawLoc.bassrock$trip.id %in% clean.trip.nb$trip.id)
+    dplyr::filter(rawLoc.bassrock$trip.id %in% 
+                      clean.trip.nb$trip.id)
 
-save(cleanLocs.bassrock,file=here("data","NewlyCreatedData","clean_locs_bassrock.Rdata"))
+cleanlandsbass<-raw_land_bassrock %>% 
+    dplyr::filter(LandDurh > 1) 
+
+
+save(cleanLocs.bassrock,
+     file=here("data","NewlyCreatedData","clean_locs_bassrock.Rdata"))
 
 remove(move.bassrock,ind.loc,locs.bassrock,serol.bassrock,dist,dur,diffloc,distloc,correl)
 
  SPDF <- SpatialPointsDataFrame(coords = cleanLocs.bassrock[,c("long","lat")], 
                                 data = cleanLocs.bassrock,
                                proj4string = CRS(projcrs))
- writeOGR(SPDF, dsn=here("data","NewlyCreatedData","shapefiles"), layer="clean_trips_raw_gannets_bassrock", driver="ESRI Shapefile", overwrite_layer =T)
+ writeOGR(SPDF, 
+          dsn=here("data","NewlyCreatedData","shapefiles"), 
+          layer="clean_trips_raw_gannets_bassrock", 
+          driver="ESRI Shapefile", 
+          overwrite_layer =T)
 
 ```
 
 ## 2- Interpolation
 
-As data has irregular time intervals between consecutive locations, we linearly interpolated data to have one location every 15min. We then compared each raw trip with interpolations.
+As data has irregular time intervals between consecutive locations, data are linearly interpolated to have one location every 15min.Each raw trip is compared with interpolations. Note that migration trips are excluded after interpolation.
 
 ```{r}
 #| echo: false
@@ -225,15 +259,11 @@ load(here("data","NewlyCreatedData","rawLocBassrock.Rdata"))
 library(rnaturalearth)
 
 ##Interpolation
-# loc.clean.interp<-interpol_ltraj(data=cleanLocs.bassrock,
-#                            time.int=reso,
-#                            colony=colo_coord_bassrock)
-
 loc.clean.interp.bassrock<-interpol_pastecs(data=cleanLocs.bassrock,
                            time.int=reso,
                            colony=colo_coord_bassrock)
 
-
+#Identification of trips to exclude (incomplete trips and migration trip)
 migration<-c("18204.25","18224.30","18225.38","18227.54","18264.35","18268.39","18271.35")
 incomplete<-c("18201.1","18224.1","18203.20")
 
@@ -241,12 +271,11 @@ loc.interp.bassrock<-loc.clean.interp.bassrock %>%
     dplyr::filter(!trip.id %in% migration) %>% 
     dplyr::filter(!trip.id %in% incomplete)
 
-
 save(loc.interp.bassrock,
      file=here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
 
-##Ilustrate interpolations with raw data
 
+##Ilustrate interpolations with raw data
 longmn=-3
 longmx=6
 latmn=54
@@ -288,14 +317,15 @@ latmax=ceiling(st_bbox(interp.ind)[4])
 
 mapa<-ggplot(data = europe_map) +
     geom_sf(fill="grey") +
-     geom_sf(data = interp.ind, shape = 16, colour = colo.ind[a]) +
+     geom_sf(data = interp.ind, shape = 23, colour = colo.ind[a]) +
      geom_sf(data = raw, shape = 17, colour = "black",size=0.8) +
     geom_sf(data = colo_sf_bassrock, shape = 15, colour = "orange") +
       coord_sf(xlim = c(longmn,longmx), ylim = c(latmn, latmx), expand = FALSE) +
     labs(title = paste ("Raw vs interpolated locations ID", ids[a],sep=" "))
  print(mapa)
-#     
-#     
+   
+ 
+ #plot each trip individually (help identify trips to exclude)     
 # tp<-unique(raw$trip.id)  
 #    
 # for (b in 1:length(tp)) {
@@ -336,13 +366,11 @@ mapa<-ggplot(data = europe_map) +
 # }
  }
 # 
-
-
 ```
 
 ## 3- Summary of clean trips
 
-At-sea trips retained are at least \>1h long, \>1km from the colony and have more than 4 locations.
+At-sea trips retained are at least \>1h long, \>1km from the colony and have more than 4 locations. Migration bounds are excluded.
 
 ```{r}
 #| echo: false
@@ -367,109 +395,20 @@ cleandur<-ggplot(trips_interp_bassrock,aes(x=DateEnd,y=TripDurh ),group=id)+
 #    scale_y_continuous(limits=c(0,10)) +
     scale_color_manual(values=colo.ind)+
     labs(x="Date",y="Trip duration (h")
-grid.arrange(cleandist,cleandur,ncol=2)
+
 
 correl<-ggplot(trips_interp_bassrock,aes(x=log(TripDurh),y=log(Distmaxkm)))+
     geom_point(aes(color=DateEnd)) +
     scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
     labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
-print(correl)
 
-```
+land<-ggplot(cleanlandsbass,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id)) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
 
-## 5- Effect of time on trip charateristics (GLMM)
+grid.arrange(cleandist,cleandur,correl,land, nrow=2,ncol=2,
+             top = textGrob("Clean trips",gp=gpar(fontsize=16,font=3)))
 
-According to GLMM, no effect of day on maximal distance, weak effect on trip duration and no effect on the total distance travelled during a trip.
-
-```{r}
-#| echo: false
-#| include: true
-#| warning: false
-#| message: false
-
-
-load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock.RData"))
-
-library(lme4)
-library(lattice)
-library(lmerTest)
-library(sjPlot)
-
-
-
-trips.interp.nomigr<-loc.interp.bassrock %>% 
-                    trips_summary_ind(.,colony=colo_coord_bassrock) %>% 
-  #  dplyr::filter(Distmaxkm < 300) %>% 
-    mutate(day=match(format(DateEnd,format="%F"), 
-                     unique(format(DateEnd,format="%F"))))
-
-#Analysis with maximal distance
-ggplot(trips.interp.nomigr,aes(x=day,y=Distmaxkm,
-                               colour=id))+
-    geom_point()+
-    geom_smooth(method="lm",alpha=0.2) + 
-    scale_y_continuous(limits=c(0,800)) +
-    ggtitle("Maximal distance to colony over time by individual")
-
-glmm.dist<-lmerTest::lmer(log(Distmaxkm) ~ day + (1 | id),data=trips.interp.nomigr)
-     
-summary(glmm.dist)
- lattice::dotplot(ranef(glmm.dist))$id
- plot_model(glmm.dist,type="pred",terms="day")
-
- 
- #Analysis with trip duration
-ggplot(trips.interp.nomigr,aes(x=day,y=TripDurh,
-                               colour=id))+
-    geom_point()+
-    geom_smooth(method="lm",alpha=0.2)+
-   ggtitle("Trip duration over time by individual")
-
-glmm.dur<-lmerTest::lmer(log(TripDurh) ~ day + (1 | id),data=trips.interp.nomigr)
- 
-summary(glmm.dur)
-lattice::dotplot(ranef(glmm.dur))$id
- plot_model(glmm.dur,type="pred",terms="day")
- 
- 
-#Analysis with total path
-ggplot(trips.interp.nomigr,aes(x=day,y=TotalPathkm,
-                               colour=id))+
-    geom_point()+
-    geom_smooth(method="lm",alpha=0.2) +
-    ggtitle("Total trip distance over time by individual")
-
-
-glmm.path<-lmerTest::lmer(log(TotalPathkm) ~ day + (1 | id),data=trips.interp.nomigr)
-   summary(glmm.path)  
-lattice::dotplot(ranef(glmm.path))$id
-plot_model(glmm.path,type="pred",terms="day")
-```
-
-## 6- Effect of time on colony attendance (GLMM)
-
-According to GLMM, no effect of day on duration of periods on land at the colony.
-
-```{r}
-#| echo: false
-#| include: true
-#| warning: false
-#| message: false
-
-lands<-raw_land_bassrock %>% 
-    dplyr::filter(LandDurh > 1) %>% 
-    mutate(day=match(format(DateEnd,format="%F"), 
-                     unique(format(DateEnd,format="%F"))))
-
-#Analysis with maximal distance
-ggplot(lands,aes(x=day,y=LandDurh,
-                               colour=id))+
-    geom_point()+
-    geom_smooth(method="lm",alpha=0.2) + 
-    ggtitle("Periods on land (h)")
-
-glmm.durnest<-lmerTest::lmer(log(LandDurh) ~ day + (1 | id), data=lands)
-summary(glmm.durnest,corr=F)    
-plot_model(glmm.durnest,type="eff",terms="day")
-lattice::dotplot(ranef(glmm.dur))$id
 ```

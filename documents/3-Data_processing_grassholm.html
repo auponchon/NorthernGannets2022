@@ -8,7 +8,7 @@
 
 <meta name="author" content="Aurore Ponchon">
 
-<title>Data processing Northern gannets Rouzic 2022</title>
+<title>Data processing Northern gannets Grassholm 2022</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -24,16 +24,16 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="1-Data_processing_rouzic_files/libs/clipboard/clipboard.min.js"></script>
-<script src="1-Data_processing_rouzic_files/libs/quarto-html/quarto.js"></script>
-<script src="1-Data_processing_rouzic_files/libs/quarto-html/popper.min.js"></script>
-<script src="1-Data_processing_rouzic_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="1-Data_processing_rouzic_files/libs/quarto-html/anchor.min.js"></script>
-<link href="1-Data_processing_rouzic_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="1-Data_processing_rouzic_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="1-Data_processing_rouzic_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="1-Data_processing_rouzic_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="1-Data_processing_rouzic_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="3-Data_processing_grassholm_files/libs/clipboard/clipboard.min.js"></script>
+<script src="3-Data_processing_grassholm_files/libs/quarto-html/quarto.js"></script>
+<script src="3-Data_processing_grassholm_files/libs/quarto-html/popper.min.js"></script>
+<script src="3-Data_processing_grassholm_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="3-Data_processing_grassholm_files/libs/quarto-html/anchor.min.js"></script>
+<link href="3-Data_processing_grassholm_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="3-Data_processing_grassholm_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="3-Data_processing_grassholm_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="3-Data_processing_grassholm_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="3-Data_processing_grassholm_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -46,7 +46,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Data processing Northern gannets Rouzic 2022</h1>
+<h1 class="title">Data processing Northern gannets Grassholm 2022</h1>
 </div>
 
 
@@ -67,80 +67,52 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<section id="importing-data-from-movebank" class="level2">
-<h2 class="anchored" data-anchor-id="importing-data-from-movebank">1- Importing data from Movebank</h2>
-<p>The dataset is stored on the online database Movebank. It can be downloaded directly from the web as long as the user has an account and requests an access. The last locations include migration trip towards wintering grounds for 4 individuals.</p>
-<div class="cell">
-
-</div>
-</section>
-<section id="processing-location-data" class="level2">
-<h2 class="anchored" data-anchor-id="processing-location-data">2- Processing location data</h2>
-<p>Movebank datasets contain a lot of information that are not all necessary for the analysis so data are filtered and sorted. Some data from other files were added, such as individual serology (not used in the end).</p>
-<p>Distances and time between locations and a few other variables are added to summarize time spent on land and at-sea. Raw data locations are visualized by some descriptive plots, especially to identify outliers in maximal distance and more importantly, time gaps.</p>
+<section id="importing-data" class="level2">
+<h2 class="anchored" data-anchor-id="importing-data">1- Importing data</h2>
+<p>GPS data are stored as individual excel files. Some files has different column orders so this had to be accounted for in file extraction. Moreover, as dry/wet sensor data and locations are merged but have different time intervals, a lot of consecutive location duplicates are present. These are filtered directly when extracting data. Loggers were deployed in May 2022 but for the analysis, only data occurring after 10th August 2022 are retained to match data from Bass Rock and Rouzic.</p>
+<p>Distances and time between locations are calculated and a few variables are added to summarize time spent on land and at-sea. Raw data locations are visualized by some descriptive plots, especially to identify outliers in maximal distance and more importantly, time gaps.</p>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
 <section id="interpolation" class="level2">
-<h2 class="anchored" data-anchor-id="interpolation">3- Interpolation</h2>
-<p>As data has irregular time intervals between consecutive locations, data are linearly interpolated to have one location every 15min. (96% of data have a time interval &lt; 15min). Each raw trip is compared with interpolations. Illustrated maps are bounded at &gt; 47° N to have a better focus on the study area before migration. Note that migration trips are excluded after interpolation</p>
+<h2 class="anchored" data-anchor-id="interpolation">2- Interpolation</h2>
+<p>As data has irregular time intervals between consecutive locations, data are linearly interpolated to have one location every 15min. Each raw trip is compared with interpolations. Migration bounds do not seem to be recorded</p>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-4.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-4.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-5.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-5.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-6.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-6.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-7.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-8.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-9.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-10.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-11.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-12.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-13.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-3-14.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-2-7.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
 <section id="summary-of-clean-trips" class="level2">
-<h2 class="anchored" data-anchor-id="summary-of-clean-trips">4- Summary of clean trips</h2>
-<p>At-sea trips retained are at least &gt;1h long, &gt;1km from the colony and have more than 4 locations. Migration bounds are excluded.</p>
+<h2 class="anchored" data-anchor-id="summary-of-clean-trips">3- Summary of clean trips</h2>
+<p>At-sea trips retained are at least &gt;1h long, &gt;1km from the colony, have more than 4 locations and have time gaps shorter than 10h.</p>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="1-Data_processing_rouzic_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<p><img src="3-Data_processing_grassholm_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
