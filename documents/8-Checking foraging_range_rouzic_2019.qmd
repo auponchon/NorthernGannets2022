@@ -1,0 +1,390 @@
+---
+title: "Foraging range for gannets breeding in 2019"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+To determine whether 2022 was a particular year in the foraging range of gannets, we run the same analysis on datasets in 2019 in the 3 studies colony
+
+## Rouzic 2019
+
+```{r}
+library(here)
+library(tidyverse)
+library(conflicted)
+library(grid)
+library(gridExtra)
+library(viridis)
+
+source(here("R","extract_rouzic_2019.R"))
+source(here("R","progress_bar.R"))
+source(here("R","trip_functions.R"))
+
+files<-list.files(here("data","raw",'Checks chick-rearing 2019',"rouzic-2019"),
+                  pattern=".csv",
+                  full.names=T)
+
+rouzic2019_raw<-data.frame()
+
+
+for (i in 1:length(files)){
+    temp<-extract_rouzic2019(files[i])
+    rouzic2019_raw<-rbind(rouzic2019_raw,temp)
+     setTxtProgressBar(progress_bar(length(files)),i)  
+}
+
+rouzic2019_raw<-as.data.frame(rouzic2019_raw)
+
+ ids<-unique(levels(rouzic2019_raw$id))
+colo.ind<-tim.colors(length(ids))
+
+
+#create new object with distance and time differences
+rawLoc.rouzic2019<-NULL
+
+#loop through each individual 
+for (i in 1:length(ids)){
+    ind.loc<-rouzic2019_raw %>% 
+        dplyr::filter(id==ids[i]) %>% 
+        mutate(distmax=0,
+               distadj=0,
+               totalpath=0,
+               difftimemin=0,
+               travelNb=0,
+               onlandNb=0)
+  
+  #  print(c("Processing individual ", i))
+      
+  #loop through each line to calculate distance and time difference with previous location
+for (l in 2:nrow(ind.loc)){
+    
+ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   ind.loc[l-1,c("long","lat")], miles = F)
+ind.loc[l,"difftimemin"]<-difftime(ind.loc[l,"datetime"],
+                                   ind.loc[l-1,"datetime"], units="mins")
+ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   colo_coord_rouzic[c(1,2)], miles = F)
+}
+setTxtProgressBar(progress_bar(length(files)),i)  
+
+#define periods on land and at sea   
+ind.loc<-define_trips(data=ind.loc,
+                      dist.min=dist.threshold)
+rawLoc.rouzic2019<-rbind(rawLoc.rouzic2019,
+                         ind.loc)    
+}
+
+rawLoc.rouzic2019$trip.id<-paste(rawLoc.rouzic2019$id,
+                                 rawLoc.rouzic2019$travelNb,
+                                 sep=".")
+rawLoc.rouzic2019<-add_missing_return(rawLoc.rouzic2019,
+                                    time.int=reso,
+                                    colony=colo_coord_rouzic)
+
+
+distraw<-ggplot(rawLoc.rouzic2019,aes(x=datetime,y=distmax),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+  #  scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+diffraw<-ggplot(rawLoc.rouzic2019,aes(x=datetime,y=difftimemin),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,5000)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Time gaps between 2 locations (in min)")
+
+grid.arrange(distraw,diffraw, ncol=2,
+             top = textGrob("Raw data Rouzic 2019",gp=gpar(fontsize=16,font=3)))
+
+
+#summarize all trips and periods on land by individuals
+raw_trips_rouz19<-trips_summary_ind(rawLoc.rouzic2019,colony=colo_coord_rouzic)
+raw_land_rouz19<-land_summary_ind(rawLoc.rouzic2019,colony=colo_coord_rouzic)
+
+
+summy.trips.rouz19<-raw_trips_rouz19 %>% 
+    group_by(id) %>% 
+    summarize(Nbtrip=n(),
+              Mindurh=min(TripDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual trips
+# kbl(summy.trips,caption="Summary of raw trips") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+summy.land.rouz19<-raw_land_rouz19 %>% 
+    group_by(id) %>% 
+    summarize(Nbland=n(),
+              Mindurh=min(LandDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual on land periods
+# kbl(summy.land,caption="Summary of periods on land") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+##plot trip and land periods
+dist<-ggplot(raw_trips_rouz19,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,500)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+dur<-ggplot(raw_trips_rouz19,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+ #   scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h)")
+
+correl<-ggplot(raw_trips_rouz19,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(colour=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+land<-ggplot(raw_land_rouz19,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id)) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+grid.arrange(dist,dur,correl,land, ncol=2,nrow=2,
+             top = textGrob("Raw trips",gp=gpar(fontsize=16,font=3)))
+
+#remove incomplete and short trips based on fixed thresholds
+clean.trip.nb<-raw_trips_rouz19 %>%
+     dplyr::filter(TripDurh > dur.thres & 
+                       nlocs >= row.thres) 
+
+cleanLocs.rouz19<-rawLoc.rouzic2019 %>%
+    dplyr::filter(rawLoc.rouzic2019$trip.id %in% 
+                      clean.trip.nb$trip.id)
+
+cleanlandsrouz19<-raw_land_rouz19 %>% 
+    dplyr::filter(LandDurh > 1) 
+
+loc.clean.interp.rouz19<-interpol_pastecs(data=cleanLocs.rouz19,
+                           time.int=reso,
+                           colony=colo_coord_rouzic)
+
+trips_interp_rouz19<-trips_summary_ind(loc.clean.interp.rouz19,
+                                       colony=colo_coord_rouzic)
+
+##plot trip and land periods
+cleandist<-ggplot(trips_interp_rouz19,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+ #   scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+cleandur<-ggplot(trips_interp_rouz19,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+#    scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h")
+
+
+correl<-ggplot(trips_interp_rouz19,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+land<-ggplot(cleanlandsrouz19,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id), show.legend = F) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+
+grid.arrange(cleandist,cleandur,correl,land, nrow=2,ncol=2,
+             top = textGrob("Clean trips Rouzic 2019",gp=gpar(fontsize=16,font=3)))
+```
+
+## Grassholm
+
+```{r}
+
+source(here("R","extract_grassholm_2019.R"))
+
+files<-list.files(here("data","raw",'Checks chick-rearing 2019'),
+                  pattern=".csv",
+                  full.names=T)
+
+grassholm2019_raw<-data.frame()
+
+
+for (i in 1:length(files)){
+    temp<-extract_grassholm2019(files[i])
+    grassholm2019_raw<-rbind(grassholm2019_raw,temp)
+     setTxtProgressBar(progress_bar(length(files)),i)  
+}
+
+grassholm2019_raw<-as.data.frame(grassholm2019_raw)
+
+ ids<-unique(levels(grassholm2019_raw$id))
+colo.ind<-tim.colors(length(ids))
+
+
+#create new object with distance and time differences
+rawLoc.grass2019<-NULL
+
+#loop through each individual 
+for (i in 1:length(ids)){
+    ind.loc<-grassholm2019_raw %>% 
+        dplyr::filter(id==ids[i]) %>% 
+        mutate(distmax=0,
+               distadj=0,
+               totalpath=0,
+               difftimemin=0,
+               travelNb=0,
+               onlandNb=0)
+  
+  #  print(c("Processing individual ", i))
+      
+  #loop through each line to calculate distance and time difference with previous location
+for (l in 2:nrow(ind.loc)){
+    
+ind.loc[l,"distadj"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   ind.loc[l-1,c("long","lat")], miles = F)
+ind.loc[l,"difftimemin"]<-difftime(ind.loc[l,"datetime"],
+                                   ind.loc[l-1,"datetime"], units="mins")
+ind.loc[l,"distmax"]<-rdist.earth(ind.loc[l,c("long","lat")],
+                                   colo_coord_grassholm[c(1,2)], miles = F)
+}
+setTxtProgressBar(progress_bar(length(files)),i)  
+
+#define periods on land and at sea   
+ind.loc<-define_trips(data=ind.loc,
+                      dist.min=dist.threshold)
+rawLoc.grass2019<-rbind(rawLoc.grass2019,
+                         ind.loc)    
+}
+
+rawLoc.grass2019$trip.id<-paste(rawLoc.grass2019$id,
+                                 rawLoc.grass2019$travelNb,
+                                 sep=".")
+rawLoc.grass2019<-add_missing_return(rawLoc.grass2019,
+                                    time.int=reso,
+                                    colony=colo_coord_rouzic)
+
+
+distraw<-ggplot(rawLoc.grass2019,aes(x=datetime,y=distmax),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+  #  scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+diffraw<-ggplot(rawLoc.grass2019,aes(x=datetime,y=difftimemin),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,5000)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Time gaps between 2 locations (in min)")
+
+grid.arrange(distraw,diffraw, ncol=2,
+             top = textGrob("Raw data Rouzic 2019",gp=gpar(fontsize=16,font=3)))
+
+
+#summarize all trips and periods on land by individuals
+raw_trips_grass19<-trips_summary_ind(rawLoc.grass2019,colony=colo_coord_grassholm)
+raw_land_grass19<-land_summary_ind(rawLoc.grass2019,colony=colo_coord_grassholm)
+
+
+summy.trips.grass19<-raw_trips_grass19 %>% 
+    group_by(id) %>% 
+    summarize(Nbtrip=n(),
+              Mindurh=min(TripDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual trips
+# kbl(summy.trips,caption="Summary of raw trips") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+summy.land.grass19<-raw_land_grass19 %>% 
+    group_by(id) %>% 
+    summarize(Nbland=n(),
+              Mindurh=min(LandDurh),
+              maxDiffh=max(maxDiffTimeh),
+              minLocs=min(nlocs))
+
+#details individual on land periods
+# kbl(summy.land,caption="Summary of periods on land") %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+##plot trip and land periods
+dist<-ggplot(raw_trips_grass19,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+    scale_y_continuous(limits=c(0,500)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+dur<-ggplot(raw_trips_grass19,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+ #   scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h)")
+
+correl<-ggplot(raw_trips_grass19,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(colour=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+land<-ggplot(raw_land_grass19,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id)) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+grid.arrange(dist,dur,correl,land, ncol=2,nrow=2,
+             top = textGrob("Raw trips",gp=gpar(fontsize=16,font=3)))
+
+#remove incomplete and short trips based on fixed thresholds
+clean.trip.nb<-raw_trips_grass19 %>%
+     dplyr::filter(TripDurh > dur.thres & 
+                       nlocs >= row.thres) 
+
+cleanLocs.grass19<-rawLoc.grass2019 %>%
+    dplyr::filter(rawLoc.grass2019$trip.id %in% 
+                      clean.trip.nb$trip.id)
+
+cleanlandsgrass19<-raw_land_grass19 %>% 
+    dplyr::filter(LandDurh > 1) 
+
+loc.clean.interp.grass19<-interpol_pastecs(data=cleanLocs.grass19,
+                           time.int=reso,
+                           colony=colo_coord_grassholm)
+
+trips_interp_grass19<-trips_summary_ind(loc.clean.interp.grass19,
+                                       colony=colo_coord_grassholm)
+
+##plot trip and land periods
+cleandist<-ggplot(trips_interp_grass19,aes(x=DateEnd,y=Distmaxkm),group=id)+
+    geom_point(aes(color=id),show.legend=F) +
+ #   scale_y_continuous(limits=c(0,200)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Maximal distance to colony (km)")
+
+cleandur<-ggplot(trips_interp_grass19,aes(x=DateEnd,y=TripDurh ),group=id)+
+    geom_point(aes(color=id)) +
+#    scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Trip duration (h")
+
+
+correl<-ggplot(trips_interp_grass19,aes(x=log(TripDurh),y=log(Distmaxkm)))+
+    geom_point(aes(color=DateEnd)) +
+    scale_colour_datetime(low=viridis(100)[1],high=viridis(100)[100]) +
+    labs(x="log Trip duration (h)",y="log Maximal distance to colony (km)")
+
+land<-ggplot(cleanlandsgrass19,aes(x=DateEnd,y=LandDurh ),group=id)+
+    geom_point(aes(color=id), show.legend = F) +
+  #  scale_y_continuous(limits=c(0,10)) +
+    scale_color_manual(values=colo.ind)+
+    labs(x="Date",y="Periods on land (h)")
+
+grid.arrange(cleandist,cleandur,correl,land, nrow=2,ncol=2,
+             top = textGrob("Clean trips Grassholm 2019",gp=gpar(fontsize=16,font=3)))
+```

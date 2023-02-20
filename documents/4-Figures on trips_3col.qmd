@@ -80,6 +80,19 @@ land.rouzic<-lands %>%
 land.grass<-lands %>% 
      dplyr::filter(site=="Grassholm")
 
+xx<-loc.interp.rouzic %>% 
+    group_by(id,site) %>% 
+    summarise(Track=max(datetime)-min(datetime))
+
+yy<-loc.interp.grassholm %>% 
+    group_by(id,site) %>% 
+    summarise(Track=difftime(max(datetime),min(datetime), units="days"))
+
+zz<-loc.interp.bassrock %>% 
+    group_by(id,site) %>% 
+    summarise(Track=max(datetime)-min(datetime))
+
+
 #Table summary
 sum.ids<-trips %>% 
     group_by(site) %>% 

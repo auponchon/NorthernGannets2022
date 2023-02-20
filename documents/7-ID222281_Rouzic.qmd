@@ -1,0 +1,143 @@
+---
+title: "6- Dead individual Rouzic"
+author: "Aurore Ponchon"
+format: docx
+editor: visual
+always_allow_html: true
+---
+
+## Trip characteristics
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+library(here)
+library(tidyverse)
+library(viridis)
+library(kableExtra)
+library(rgdal)
+library(sf)
+library(ggspatial)
+
+source(here("R","trip_functions.R"))
+
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic.RData"))
+trips.rouzic<-trips_summary_ind(loc.interp.rouzic,colony=colo_coord_rouzic) %>% 
+    dplyr::filter(id=="222281")%>% 
+    dplyr::select(-maxDiffTimeh,-site,-id) %>% 
+    mutate(Distmaxkm=round(Distmaxkm,digits=0),
+           TripDurh=round(TripDurh,digits=0),
+           TotalPathkm=round(TotalPathkm,digits=0))
+#rouzic for nest attendance
+load(here("data","NewlyCreatedData","rawLocRouzic.Rdata"))
+land.rouzic<-rawLoc.rouzic %>% 
+    land_summary_ind(.,colony=colo_coord_rouzic) %>% 
+    dplyr::filter(LandDurh > 1 & id=="222281") %>% 
+    dplyr::select(-maxDiffTimeh,-onlandNb,-site)
+
+
+#tables for trip characteristics
+kbl(trips.rouzic,caption="Trips ID 222281") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(land.rouzic,caption="On land ID 222281",digits=1) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+#maps
+longmnr=380000
+longmxr=490000
+latmnr=5350000
+latmxr=5500000
+
+land<-readOGR(dsn=here("data","NewlyCreatedData","shapefiles"),layer="euro_afri_map", verbose=FALSE)
+proj4string(land)<-wgscrs
+land_proj<-spTransform(land, projcrs)
+
+
+coord_rouzic<-colo_coord_rouzic %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+
+land_proj_rouz<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnr, ymin = latmnr, 
+    #              xmax =longmxr, ymax =latmxr)) %>% 
+    sf::st_transform(., projcrs)   
+
+maxdaterouz<-loc.interp.rouzic %>% 
+    dplyr::filter(id=="222281") %>% 
+    mutate(day=format(datetime,format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_rouz<- loc.interp.rouzic  %>% 
+    dplyr::filter(id=="222281") %>% 
+    left_join(maxdaterouz,by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+sf_lines_rouz <- sf_locs_rouz %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING") %>% 
+  mutate(Date=as.Date(Date,format="%d/%m"))  %>% 
+    arrange(Date)
+
+rouzgg<-ggplot()+
+     geom_sf(data = sf_lines_rouz, mapping=aes(colour=Date),alpha=0.7) +
+     geom_sf(data=land_proj_rouz,fill="grey90",size=0.2) +   
+     geom_sf(data = coord_rouzic,shape=23, colour="black",fill="yellow", size=4) + 
+     coord_sf(xlim = c(longmnr,longmxr), ylim=c(latmnr, latmxr),  expand = FALSE) +
+    labs(tag="ID 222281") +
+     scale_colour_gradientn(colours=viridis(length(unique(sf_lines_rouz$Date))),
+                            breaks = seq.Date(min(sf_lines_rouz$Date),
+                                       max(sf_lines_rouz$Date),length.out=4)) +
+      annotation_scale(location = "bl", width_hint = 0.3,
+                     pad_x = unit(0.3, "cm"), bar_cols = "black") +
+    annotation_north_arrow(location = "br", which_north = "true",
+    style = ggspatial::north_arrow_nautical(), pad_y = unit(0.3, "cm")) +
+    theme_bw() +
+    theme(#legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
+
+print(rouzgg)
+
+load(here("data","NewlyCreatedData","all_loc_HMM.RData"))
+dat.prop<-dat %>% 
+    as.data.frame(.) %>% 
+    dplyr::filter(ID=="222281") %>% 
+    group_by(ID,site,trip.id,states) %>% 
+    summarize(SumAct=sum(difftimemin),
+              Count=n())
+
+tot<-dat %>% 
+    group_by(trip.id) %>% 
+     dplyr::filter(ID=="222281") %>% 
+    summarize(Tot=sum(difftimemin),
+               DateEnd= max(datetime))
+
+dat.prop.tot<-dat.prop %>% 
+   left_join(tot,by="trip.id") %>% 
+    mutate(PropAct=round(SumAct/Tot*100,digits=1),
+           day=as.numeric(as.Date(DateEnd) - as.Date("2022-08-10"))) %>% 
+    pivot_wider(id_cols=c("ID","site","trip.id","day"),
+        names_from = states,id_expand=F,
+                names_prefix = "Act",
+                values_from = PropAct,
+                names_sep=".",
+                values_fill=0) %>% 
+    rename(Resting=Act1,
+           Foraging=Act2,
+           Flying=Act3)
+
+kbl(dat.prop.tot,caption="Percentage of activities per trip") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
