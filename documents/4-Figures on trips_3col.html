@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Aurore Ponchon">
+
+<title>Trip characteristics with LMM</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="4-Figures on trips_3col_files/libs/clipboard/clipboard.min.js"></script>
+<script src="4-Figures on trips_3col_files/libs/quarto-html/quarto.js"></script>
+<script src="4-Figures on trips_3col_files/libs/quarto-html/popper.min.js"></script>
+<script src="4-Figures on trips_3col_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="4-Figures on trips_3col_files/libs/quarto-html/anchor.min.js"></script>
+<link href="4-Figures on trips_3col_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="4-Figures on trips_3col_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="4-Figures on trips_3col_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="4-Figures on trips_3col_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="4-Figures on trips_3col_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+<script src="4-Figures on trips_3col_files/libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="4-Figures on trips_3col_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Trip characteristics with LMM</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Aurore Ponchon </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="plots-with-lme-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="plots-with-lme-predictions">Plots with LME predictions</h2>
+<p>Linear mixed models are applied on trip charateristics to test whether individuals change their spatial behaviour over time. Models are fitted on each colony separately.</p>
+<div class="cell">
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Sample size for trips</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> site </th>
+   <th style="text-align:right;"> Ids </th>
+   <th style="text-align:right;"> Trips </th>
+   <th style="text-align:left;"> Debut </th>
+   <th style="text-align:left;"> Fin </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 310 </td>
+   <td style="text-align:left;"> 2022-08-11 14:27:16 </td>
+   <td style="text-align:left;"> 2022-10-12 11:10:36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Grassholm </td>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 50 </td>
+   <td style="text-align:left;"> 2022-08-11 06:40:03 </td>
+   <td style="text-align:left;"> 2022-09-14 14:45:05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 13 </td>
+   <td style="text-align:right;"> 257 </td>
+   <td style="text-align:left;"> 2022-08-24 05:34:11 </td>
+   <td style="text-align:left;"> 2022-09-28 06:30:29 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Sample size for periods on land</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> site </th>
+   <th style="text-align:right;"> Ids </th>
+   <th style="text-align:right;"> Land </th>
+   <th style="text-align:left;"> Debut </th>
+   <th style="text-align:left;"> Fin </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 49 </td>
+   <td style="text-align:left;"> 2022-08-11 10:01:03 </td>
+   <td style="text-align:left;"> 2022-10-09 05:27:10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Grassholm </td>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 31 </td>
+   <td style="text-align:left;"> 2022-08-10 12:10:03 </td>
+   <td style="text-align:left;"> 2022-09-18 04:30:00 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 13 </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:left;"> 2022-08-24 15:32:14 </td>
+   <td style="text-align:left;"> 2022-09-26 18:17:02 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Summary of trip characteristics</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Colony </th>
+   <th style="text-align:right;"> DistmaxMean </th>
+   <th style="text-align:right;"> DistmaxSE </th>
+   <th style="text-align:right;"> TripDurMean </th>
+   <th style="text-align:right;"> TripDurSE </th>
+   <th style="text-align:right;"> TotPathMean </th>
+   <th style="text-align:right;"> TotPathSE </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 98 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 19 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 254 </td>
+   <td style="text-align:right;"> 21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Grassholm </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 16 </td>
+   <td style="text-align:right;"> 4 </td>
+   <td style="text-align:right;"> 191 </td>
+   <td style="text-align:right;"> 28 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:right;"> 4 </td>
+   <td style="text-align:right;"> 18 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 171 </td>
+   <td style="text-align:right;"> 11 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Summary of nest attendance</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Colony </th>
+   <th style="text-align:right;"> DurationMean </th>
+   <th style="text-align:right;"> DurationSE </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Bass Rock </td>
+   <td style="text-align:right;"> 16 </td>
+   <td style="text-align:right;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Grassholm </td>
+   <td style="text-align:right;"> 18 </td>
+   <td style="text-align:right;"> 2 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Rouzic </td>
+   <td style="text-align:right;"> 11 </td>
+   <td style="text-align:right;"> 1 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</section>
+<section id="test-of-maximal-distance-to-the-colony-over-time" class="level2">
+<h2 class="anchored" data-anchor-id="test-of-maximal-distance-to-the-colony-over-time">1. Test of maximal distance to the colony over time</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<section id="rouzic" class="level3">
+<h3 class="anchored" data-anchor-id="rouzic">1.1. Rouzic</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.rouzic 
+       AIC      BIC    logLik
+  604.5553 618.7204 -298.2776
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:    0.173446 0.7440512
+
+Fixed effects:  log(Distmaxkm) ~ day 
+                Value  Std.Error  DF   t-value p-value
+(Intercept)  3.943329 0.16694622 243 23.620355  0.0000
+day         -0.002975 0.00563791 243 -0.527622  0.5982
+ Correlation: 
+    (Intr)
+day -0.912
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-4.72368617 -0.52155092  0.06805548  0.71036531  1.92208577 
+
+Number of Observations: 257
+Number of Groups: 13 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1   243 3170.102  &lt;.0001
+day             1   243    0.278  0.5982</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="bass-rock" class="level3">
+<h3 class="anchored" data-anchor-id="bass-rock">1.2. Bass Rock</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.bassrock 
+       AIC      BIC    logLik
+  1048.595 1063.516 -520.2977
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept) Residual
+StdDev:   0.2964115 1.257218
+
+Fixed effects:  log(Distmaxkm) ~ day 
+               Value  Std.Error  DF   t-value p-value
+(Intercept) 3.782112 0.16261898 299 23.257508  0.0000
+day         0.009349 0.00460333 299  2.030914  0.0431
+ Correlation: 
+    (Intr)
+day -0.666
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-3.0111544 -0.4350039  0.2123621  0.6514267  1.7903213 
+
+Number of Observations: 310
+Number of Groups: 10 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF   F-value p-value
+(Intercept)     1   299 1088.2589  &lt;.0001
+day             1   299    4.1246  0.0431</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="grassholm" class="level3">
+<h3 class="anchored" data-anchor-id="grassholm">1.3. Grassholm</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.grass 
+       AIC      BIC    logLik
+  128.2557 135.7406 -60.12787
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:   0.2935813 0.7259153
+
+Fixed effects:  log(Distmaxkm) ~ day 
+                Value  Std.Error DF   t-value p-value
+(Intercept)  4.002973 0.23599003 44 16.962465  0.0000
+day         -0.011538 0.01357924 44 -0.849712  0.4001
+ Correlation: 
+    (Intr)
+day -0.616
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-1.72683603 -0.57048949 -0.02885042  0.48077250  2.96518232 
+
+Number of Observations: 50
+Number of Groups: 5 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1    44 435.6047  &lt;.0001
+day             1    44   0.7220  0.4001</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="prediction-of-maximal-distance-for-all-3-colonies" class="level3">
+<h3 class="anchored" data-anchor-id="prediction-of-maximal-distance-for-all-3-colonies">1.4. Prediction of maximal distance for all 3 colonies</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="test-on-trip-duration" class="level2">
+<h2 class="anchored" data-anchor-id="test-on-trip-duration">2. Test on trip duration</h2>
+<section id="rouzic-1" class="level3">
+<h3 class="anchored" data-anchor-id="rouzic-1">2.1. Rouzic</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.rouzic 
+       AIC      BIC    logLik
+  654.3254 668.4905 -323.1627
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:    0.217521 0.8176989
+
+Fixed effects:  log(TripDurh) ~ day 
+                Value  Std.Error  DF   t-value p-value
+(Intercept) 2.2857775 0.18646944 243 12.258188  0.0000
+day         0.0107906 0.00624166 243  1.728807  0.0851
+ Correlation: 
+    (Intr)
+day -0.9  
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-3.0683256 -0.6025134  0.1749545  0.6403213  2.6184275 
+
+Number of Observations: 257
+Number of Groups: 13 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF   F-value p-value
+(Intercept)     1   243 1009.1920  &lt;.0001
+day             1   243    2.9888  0.0851</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="bass-rock-1" class="level3">
+<h3 class="anchored" data-anchor-id="bass-rock-1">2.2. Bass Rock</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.bassrock 
+       AIC      BIC    logLik
+  959.9643 974.8847 -475.9821
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept) Residual
+StdDev:   0.2871686 1.086509
+
+Fixed effects:  log(TripDurh) ~ day 
+                Value  Std.Error  DF   t-value p-value
+(Intercept) 2.1019810 0.14673238 299 14.325271  0.0000
+day         0.0131229 0.00398844 299  3.290239  0.0011
+ Correlation: 
+    (Intr)
+day -0.637
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-2.6883744 -0.6648899  0.1842158  0.7278123  2.0626810 
+
+Number of Observations: 310
+Number of Groups: 10 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1   299 453.9543  &lt;.0001
+day             1   299  10.8257  0.0011</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="grassholm-1" class="level3">
+<h3 class="anchored" data-anchor-id="grassholm-1">2.3. Grassholm</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.grass 
+       AIC      BIC    logLik
+  161.7011 169.1859 -76.85053
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept) Residual
+StdDev:   0.4823727  1.02211
+
+Fixed effects:  log(TripDurh) ~ day 
+                 Value Std.Error DF   t-value p-value
+(Intercept)  2.4663412 0.3522239 44  7.002198  0.0000
+day         -0.0143885 0.0193559 44 -0.743367  0.4612
+ Correlation: 
+    (Intr)
+day -0.573
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-2.17874244 -0.53172002  0.02756571  0.51480774  2.63764601 
+
+Number of Observations: 50
+Number of Groups: 5 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1    44 64.35570  &lt;.0001
+day             1    44  0.55259  0.4612</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="prediction-of-trip-duration-over-time-for-all-3-colonies" class="level3">
+<h3 class="anchored" data-anchor-id="prediction-of-trip-duration-over-time-for-all-3-colonies">2.4. Prediction of trip duration over time for all 3 colonies</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="test-on-total-distance-travelled" class="level2">
+<h2 class="anchored" data-anchor-id="test-on-total-distance-travelled">3. Test on total distance travelled</h2>
+<section id="rouzic-2" class="level3">
+<h3 class="anchored" data-anchor-id="rouzic-2">3.1. Rouzic</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.rouzic 
+       AIC      BIC    logLik
+  639.9885 654.1535 -315.9942
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:   0.1407559 0.8020538
+
+Fixed effects:  log(TotalPathkm) ~ day 
+               Value  Std.Error  DF   t-value p-value
+(Intercept) 4.837828 0.17513218 243 27.623866  0.0000
+day         0.000018 0.00598222 243  0.003021  0.9976
+ Correlation: 
+    (Intr)
+day -0.929
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-4.6175017 -0.6182907  0.1325411  0.6889120  2.0643586 
+
+Number of Observations: 257
+Number of Groups: 13 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1   243 5545.699  &lt;.0001
+day             1   243    0.000  0.9976</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-11-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="bass-rock-2" class="level3">
+<h3 class="anchored" data-anchor-id="bass-rock-2">3.2. Bass Rock</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.bassrock 
+       AIC      BIC   logLik
+  1074.316 1089.236 -533.158
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept) Residual
+StdDev:   0.3178612 1.310171
+
+Fixed effects:  log(TotalPathkm) ~ day 
+               Value  Std.Error  DF   t-value p-value
+(Intercept) 4.623921 0.17121599 299 27.006361    0.00
+day         0.011223 0.00480033 299  2.337986    0.02
+ Correlation: 
+    (Intr)
+day -0.659
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-3.0432758 -0.4320141  0.1828651  0.6911999  1.7687322 
+
+Number of Observations: 310
+Number of Groups: 10 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF   F-value p-value
+(Intercept)     1   299 1440.4872  &lt;.0001
+day             1   299    5.4662    0.02</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-12-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="grassholm-2" class="level3">
+<h3 class="anchored" data-anchor-id="grassholm-2">3.3. Grassholm</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: trips.grass 
+       AIC      BIC    logLik
+  142.7385 150.2233 -67.36926
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:   0.3529898 0.8430044
+
+Fixed effects:  log(TotalPathkm) ~ day 
+                Value  Std.Error DF   t-value p-value
+(Intercept)  5.054671 0.27742957 44 18.219656  0.0000
+day         -0.016967 0.01581464 44 -1.072858  0.2892
+ Correlation: 
+    (Intr)
+day -0.607
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-1.66126020 -0.54018229 -0.01872867  0.45677279  2.91988100 
+
+Number of Observations: 50
+Number of Groups: 5 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1    44 488.4404  &lt;.0001
+day             1    44   1.1510  0.2892</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-13-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="prediction-of-total-distance-travelled-over-time-for-all-3-colonies" class="level3">
+<h3 class="anchored" data-anchor-id="prediction-of-total-distance-travelled-over-time-for-all-3-colonies">3.4. Prediction of total distance travelled over time for all 3 colonies</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="test-on-time-spent-in-the-colony" class="level2">
+<h2 class="anchored" data-anchor-id="test-on-time-spent-in-the-colony">4. Test on time spent in the colony</h2>
+<section id="rouzic-3" class="level3">
+<h3 class="anchored" data-anchor-id="rouzic-3">4.1. Rouzic</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: land.rouzic 
+       AIC      BIC    logLik
+  615.7997 629.5867 -303.8999
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:   0.2708241 0.8458685
+
+Fixed effects:  log(LandDurh) ~ day 
+                 Value  Std.Error  DF   t-value p-value
+(Intercept)  2.3739401 0.20663952 220 11.488316  0.0000
+day         -0.0148396 0.00709761 220 -2.090787  0.0377
+ Correlation: 
+    (Intr)
+day -0.888
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-2.31591796 -0.65355713  0.07317345  0.80362479  2.07544751 
+
+Number of Observations: 234
+Number of Groups: 13 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1   220 436.9866  &lt;.0001
+day             1   220   4.3714  0.0377</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-15-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="bass-rock-3" class="level3">
+<h3 class="anchored" data-anchor-id="bass-rock-3">4.2. Bass Rock</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: land.bassrock 
+       AIC      BIC    logLik
+  806.2644 821.0393 -399.1322
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:    0.144996 0.8941852
+
+Fixed effects:  log(LandDurh) ~ day 
+                Value  Std.Error  DF   t-value p-value
+(Intercept)  2.519547 0.10741103 288 23.457059  0.0000
+day         -0.002636 0.00344334 288 -0.765531  0.4446
+ Correlation: 
+    (Intr)
+day -0.754
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-2.9793704 -0.5952280  0.3419620  0.6778635  1.8441864 
+
+Number of Observations: 299
+Number of Groups: 10 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1   288 1211.396  &lt;.0001
+day             1   288    0.586  0.4446</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-16-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="grassholm-3" class="level3">
+<h3 class="anchored" data-anchor-id="grassholm-3">4.3. Grassholm</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: land.grass 
+       AIC      BIC    logLik
+  145.3731 153.7505 -68.68656
+
+Random effects:
+ Formula: ~1 | id
+        (Intercept)  Residual
+StdDev:   0.1261141 0.6778671
+
+Fixed effects:  log(LandDurh) ~ day 
+                 Value  Std.Error DF   t-value p-value
+(Intercept)  2.7705979 0.15411792 56 17.977130  0.0000
+day         -0.0111749 0.00990264 56 -1.128479  0.2639
+ Correlation: 
+    (Intr)
+day -0.704
+
+Standardized Within-Group Residuals:
+       Min         Q1        Med         Q3        Max 
+-2.8060022 -0.5787141  0.2787274  0.6590127  2.2538522 
+
+Number of Observations: 62
+Number of Groups: 5 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            numDF denDF  F-value p-value
+(Intercept)     1    56 585.5257  &lt;.0001
+day             1    56   1.2735  0.2639</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="prediction-of-periods-spent-in-the-colony-over-time-for-all-3-colonies" class="level3">
+<h3 class="anchored" data-anchor-id="prediction-of-periods-spent-in-the-colony-over-time-for-all-3-colonies">4.4. Prediction of periods spent in the colony over time for all 3 colonies</h3>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="4-Figures-on-trips_3col_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>png 
+  2 </code></pre>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
