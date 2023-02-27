@@ -23,8 +23,6 @@ Behavioural states are associated with each trip location:
 library(moveHMM)
 library(tidyverse)
 library(here)
-library(gridExtra)
-library(kableExtra)
 
 source(here("R","trip_functions.R"))
 

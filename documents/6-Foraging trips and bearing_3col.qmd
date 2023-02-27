@@ -73,6 +73,12 @@ coord_bassrock<-colo_coord_bassrock %>%
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs)
 
+coord_trouphead<-data.frame(long=-2.2995818,
+                            lat=57.681856) %>% 
+                 sf::st_as_sf(., coords = c("long","lat")) %>% 
+                 sf::st_set_crs(wgscrs) %>% 
+                 sf::st_transform(., projcrs)
+
 land_proj_bass<-land %>% 
     st_as_sf(.) %>% 
     # st_crop(., c(xmin = longmnbr, ymin = latmnbr, 
@@ -112,23 +118,30 @@ bassgg<-ggplot()+
              colour="black",
              fill="yellow", 
              size=4) + 
-     coord_sf(xlim = c(longmnbr,longmxbr), 
-              ylim=c(latmnbr, latmxbr),  
+    geom_sf(data =coord_trouphead,
+            shape=21, 
+             colour="black",
+             fill="orange", 
+             size=3) +
+     coord_sf(xlim = c(longmnbr,longmxbr),
+              ylim=c(latmnbr, latmxbr),
               expand = FALSE) +
     annotate("text",
              x=460000,
-             y=6310000,
+             y=6330000,
              size=2.5, 
              label="italic(Scotland)" , 
              parse=TRUE) +
-     labs(tag="a)") +
+     labs(tag="a)",
+          x="",
+          y="") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass$Date))),
                             breaks = seq.Date(min(sf_lines_bass$Date),
                                               max(sf_lines_bass$Date),
                                               length.out=4),
                            labels = c("11/08", "31/08" ,"21/09" ,"12/10")) +
     annotation_scale(location = "br", 
-                     width_hint = 0.3,
+                     width_hint = 0.15,
                      pad_x = unit(0.7, "cm"),
                      bar_cols = "black") +
     annotation_north_arrow(location = "br", 
@@ -137,7 +150,8 @@ bassgg<-ggplot()+
     pad_y = unit(0.8, "cm")) +
     theme_bw() +
     theme(legend.position = "none",
-          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"),
+          axis.text = element_text(size=10))
 
 print(bassgg)
 
@@ -180,6 +194,11 @@ coord_grassholm<-colo_coord_grassholm %>%
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs)
 
+coord_salt<-data.frame(long=-6.618046,
+                       lat=52.14131905) %>%
+    sf::st_as_sf(., coords = c("long","lat")) %>%
+    sf::st_set_crs(wgscrs) %>%
+    sf::st_transform(., projcrs)
 
 land_proj_grass<-land %>% 
     st_as_sf(.) %>% 
@@ -221,10 +240,17 @@ grassgg<-ggplot()+
              colour="black",
              fill="yellow", 
              size=4) + 
+    geom_sf(data = coord_salt,
+             shape=21, 
+             colour="black",
+             fill="orange",
+             size=3) +
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
-    labs(tag="b)") +
+    labs(tag="b)",
+          x="",
+          y="") +
     annotate("text",
              x=190000,
              y=5900000,
@@ -294,6 +320,12 @@ coord_rouzic<-colo_coord_rouzic %>%
     sf::st_transform(., projcrs)
 
 
+coord_ortac<-data.frame(long=-2.22903930,
+                        lat=49.72982792)%>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
 land_proj_rouz<-land %>% 
     st_as_sf(.) %>% 
     # st_crop(., c(xmin = longmnr, ymin = latmnr, 
@@ -331,10 +363,17 @@ rouzgg<-ggplot()+
              colour="black",
              fill="yellow",
              size=4) + 
+    geom_sf(data = coord_ortac,
+             shape=21, 
+             colour="black",
+             fill="orange",
+             size=3) +
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
-    labs(tag="c)") +
+    labs(tag="c)",
+          x="",
+          y="") +
     annotate("text",
              x=525000,
              y=5335000,
@@ -343,7 +382,7 @@ rouzgg<-ggplot()+
              parse=TRUE) +
     annotate("text",
              x=466000,
-             y=5640000,
+             y=5635000,
              size=3, 
              label="italic(England)" ,
              parse=TRUE) +
@@ -495,7 +534,7 @@ g1<-ggplot(loc.bass,
   
   print(g3)  
   
-  tiff(here("outputs","Figure_maps_bearing_3col.tif"),width=5000,
+  tiff(here("outputs","Figure_maps_bearing_3col1.tif"),width=5000,
        height=5000,res=600,
      compression="lzw")
    grid.arrange(bassgg,g1,legbass,
