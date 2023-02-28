@@ -1,0 +1,546 @@
+---
+title: "Foraging trips and bearing in 2019"
+author: "Aurore Ponchon"
+format: html
+editor: visual
+---
+
+# Illustrating foraging trips in 2019
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+library(here)
+library(tidyverse)
+library(viridis)
+library(gridExtra)
+library(sf)
+library(rgdal)
+library(ggspatial)
+library(conflicted)
+
+
+source(here("R","trip_functions.R"))
+# font_add_google(name="Rokkitt",family="rokkitt")
+# showtext_auto()
+
+
+#bassrock for trips
+load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock2019.RData"))
+load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic2019.RData"))
+load(here("Data","NewlyCreatedData","loc_clean_interp_grassholm2019.RData"))
+
+land<-readOGR(dsn=here("data","NewlyCreatedData","shapefiles"),
+              layer="euro_afri_map",
+              verbose=FALSE)
+proj4string(land)<-wgscrs
+land_proj<-spTransform(land, projcrs)
+
+
+```
+
+# Representing tracks over time for Bass Rock
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#limits for Bass Rock
+# longmnbr=-5
+# longmxbr=8
+# latmnbr=53
+# latmxbr=59.5
+
+#calculate bottom left and top right projected coordinates
+br<-data.frame(long=c(-5,9),
+               lat=c(53,59.5)) %>%
+    sf::st_as_sf(., coords = c("long","lat")) %>%
+    sf::st_set_crs(wgscrs) %>%
+    sf::st_transform(., projcrs)
+
+longmnbr=310000
+longmxbr=1180000
+latmnbr=5874142
+latmxbr=6647326
+
+coord_bassrock<-colo_coord_bassrock %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+coord_trouphead<-data.frame(long=-2.2995818,
+                            lat=57.681856) %>% 
+                 sf::st_as_sf(., coords = c("long","lat")) %>% 
+                 sf::st_set_crs(wgscrs) %>% 
+                 sf::st_transform(., projcrs)
+
+land_proj_bass<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnbr, ymin = latmnbr, 
+    #              xmax =longmxbr, ymax =latmxbr)) %>% 
+   sf::st_transform(., projcrs)
+ 
+maxdatebass<-loc.clean.interp.bass19 %>% 
+    mutate(day=format(datetime,
+                      format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_bass2019 <- loc.clean.interp.bass19  %>% 
+    left_join(maxdatebass,
+              by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+sf_lines_bass2019 <- sf_locs_bass2019 %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING")  %>% 
+  mutate(Date=as.Date(Date,
+                      format="%d/%m"))  %>% 
+    arrange(Date)
+
+
+bassgg2019<-ggplot()+
+     geom_sf(data=land_proj_bass,
+             fill="grey90",
+             size=0.2) +   
+     geom_sf(data = sf_lines_bass2019, 
+             mapping=aes(colour=Date),alpha=0.7) +
+     geom_sf(data = coord_bassrock,
+             shape=23, 
+             colour="black",
+             fill="yellow", 
+             size=4) + 
+    geom_sf(data =coord_trouphead,
+            shape=21, 
+             colour="black",
+             fill="orange", 
+             size=3) +
+     coord_sf(xlim = c(longmnbr,longmxbr),
+              ylim=c(latmnbr, latmxbr),
+              expand = FALSE) +
+    annotate("text",
+             x=460000,
+             y=6330000,
+             size=2.5, 
+             label="italic(Scotland)" , 
+             parse=TRUE) +
+     labs(tag="a)",
+          x="",
+          y="") +
+     scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass2019$Date))),
+                            breaks = seq.Date(min(sf_lines_bass2019$Date),
+                                              max(sf_lines_bass2019$Date),
+                                              length.out=4),
+                           labels = c("23/06", "05/07" ,"17/07" ,"30/07")) +
+    annotation_scale(location = "br", 
+                     width_hint = 0.15,
+                     pad_x = unit(0.7, "cm"),
+                     bar_cols = "black") +
+    annotation_north_arrow(location = "br", 
+                           which_north = "true",
+    style = ggspatial::north_arrow_nautical(), 
+    pad_y = unit(0.8, "cm")) +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"),
+          axis.text = element_text(size=10))
+
+print(bassgg2019)
+
+legbass2019<-g_legend(bassgg2019+theme(legend.position="left")+
+    guides(color = guide_colorbar(reverse = TRUE)))
+
+# write_sf(sf_lines_bass, dsn=here("data","NewlyCreatedData","shapefiles"),
+#          driver="ESRI Shapefile",
+#          layer="tracks_bassrock", append=F, delete_layer=T)
+```
+
+# Representing tracks for Grassholm
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+#limits for Grassholm
+longmn=-9
+longmx=-4
+latmn=49
+latmx=54
+
+#calculate bttom left and top right projected coordinates
+br<-data.frame(long=c(-9,-4),
+               lat=c(49,54)) %>%
+    sf::st_as_sf(., coords = c("long","lat")) %>%
+    sf::st_set_crs(wgscrs) %>%
+    sf::st_transform(., projcrs)
+
+longmnr=15000
+longmxr=630000
+latmnr=5444800
+latmxr=5984090
+
+coord_grassholm<-colo_coord_grassholm %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+coord_salt<-data.frame(long=-6.618046,
+                       lat=52.14131905) %>%
+    sf::st_as_sf(., coords = c("long","lat")) %>%
+    sf::st_set_crs(wgscrs) %>%
+    sf::st_transform(., projcrs)
+
+land_proj_grass<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnr, ymin = latmnr, 
+    #              xmax =longmxr, ymax =latmxr)) %>% 
+    sf::st_transform(., projcrs)   
+
+maxdategrass<-loc.clean.interp.grass19 %>% 
+    mutate(day=format(datetime,
+                      format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_grass2019<- loc.clean.interp.grass19  %>% 
+    left_join(maxdategrass,
+              by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+sf_lines_grass2019 <- sf_locs_grass2019 %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING") %>% 
+  mutate(Date=as.Date(Date,
+                      format="%d/%m"))  %>% 
+    arrange(Date)
+
+
+grassgg2019<-ggplot()+
+     geom_sf(data = sf_lines_grass2019, 
+             mapping=aes(colour=Date),
+             alpha=0.7) +
+     geom_sf(data=land_proj_grass,
+             fill="grey90",
+             size=0.2) +   
+     geom_sf(data = coord_grassholm,
+             shape=23, 
+             colour="black",
+             fill="yellow", 
+             size=4) + 
+    geom_sf(data = coord_salt,
+             shape=21, 
+             colour="black",
+             fill="orange",
+             size=3) +
+     coord_sf(xlim = c(longmnr,longmxr), 
+              ylim=c(latmnr, latmxr),  
+              expand = FALSE) +
+    labs(tag="b)",
+          x="",
+          y="") +
+    annotate("text",
+             x=190000,
+             y=5900000,
+             size=3, 
+             label="italic(Ireland)", 
+             parse=TRUE) +
+        annotate("text",
+                 x=550000,
+                 y=5820000,
+                 size=3, 
+                 label="italic(Wales)" ,
+                 parse=TRUE) +
+     scale_colour_gradientn(colours=magma(length(unique(sf_lines_grass2019$Date)),
+                                          begin=0.2,end=0.85),
+                            breaks = seq.Date(min(sf_lines_grass2019$Date),
+                                       max(sf_lines_grass2019$Date),
+                                       length.out=4),
+                         labels = c("14/07", "15/07" ,"16/07" ,"17/07")) +
+      annotation_scale(location = "bl", 
+                       width_hint = 0.3,
+                     pad_x = unit(0.3, "cm"), 
+                     bar_cols = "black") +
+    annotation_north_arrow(location = "br", 
+                           which_north = "true",
+    style = ggspatial::north_arrow_nautical(), 
+    pad_y = unit(0.3, "cm")) +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
+
+print(grassgg2019)
+
+leggrass2019<-g_legend(grassgg2019+theme(legend.position="left")+
+    guides(color = guide_colorbar(reverse = TRUE)))
+
+```
+
+# Representing tracks over time for Rouzic
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+
+#limits for Rouzic
+# longmnr=-6
+# longmxr=0
+# latmnr=47.5
+# latmxr=51
+
+#calculate bttom left and top right projected coordinates
+# br<-data.frame(long=c(-6,0),lat=c(47.5,51)) %>% 
+#     sf::st_as_sf(., coords = c("long","lat")) %>% 
+#     sf::st_set_crs(wgscrs) %>% 
+#     sf::st_transform(., projcrs)
+
+longmnr=274068.6
+longmxr=710488.9
+latmnr=5265093
+latmxr=5654109
+
+coord_rouzic<-colo_coord_rouzic %>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+
+coord_ortac<-data.frame(long=-2.22903930,
+                        lat=49.72982792)%>% 
+     sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs)
+
+land_proj_rouz<-land %>% 
+    st_as_sf(.) %>% 
+    # st_crop(., c(xmin = longmnr, ymin = latmnr, 
+    #              xmax =longmxr, ymax =latmxr)) %>% 
+    sf::st_transform(., projcrs)   
+
+maxdaterouz<-loc.clean.interp.rouz19 %>% 
+    mutate(day=format(datetime,
+                      format="%d/%m")) %>% 
+    group_by(trip.id) %>% 
+    summarize(Date=max(day))
+
+sf_locs_rouz2019<- loc.clean.interp.rouz19  %>% 
+    left_join(maxdaterouz,
+              by="trip.id") %>% 
+    sf::st_as_sf(., coords = c("long","lat")) %>% 
+    sf::st_set_crs(wgscrs) %>% 
+    sf::st_transform(., projcrs) 
+
+sf_lines_rouz2019 <- sf_locs_rouz2019 %>% 
+  group_by(Date,trip.id) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING") %>% 
+  mutate(Date=as.Date(Date,
+                      format="%d/%m"))  %>% 
+    arrange(Date)
+
+rouzgg2019<-ggplot()+
+     geom_sf(data = sf_lines_rouz2019, mapping=aes(colour=Date),alpha=0.7) +
+     geom_sf(data=land_proj_rouz,
+             fill="grey90",
+             size=0.2) +   
+     geom_sf(data = coord_rouzic,
+             shape=23, 
+             colour="black",
+             fill="yellow",
+             size=4) + 
+    geom_sf(data = coord_ortac,
+             shape=21, 
+             colour="black",
+             fill="orange",
+             size=3) +
+     coord_sf(xlim = c(longmnr,longmxr), 
+              ylim=c(latmnr, latmxr), 
+              expand = FALSE) +
+    labs(tag="c)",
+          x="",
+          y="") +
+    annotate("text",
+             x=525000,
+             y=5335000,
+             size=3, 
+             label="italic(Brittany)" ,
+             parse=TRUE) +
+    annotate("text",
+             x=466000,
+             y=5635000,
+             size=3, 
+             label="italic(England)" ,
+             parse=TRUE) +
+     scale_colour_gradientn(colours=mako(length(unique(sf_lines_rouz2019$Date))),
+                            breaks = seq.Date(min(sf_lines_rouz2019$Date),
+                                       max(sf_lines_rouz2019$Date),
+                                       length.out=4),
+                         labels = c("21/06", "23/06" ,"25/06" ,"28/06")) +
+      annotation_scale(location = "bl", 
+                       width_hint = 0.3,
+                     pad_x = unit(0.3, "cm"), 
+                     bar_cols = "black") +
+    annotation_north_arrow(location = "br", 
+                           which_north = "true",
+    style = ggspatial::north_arrow_nautical(), 
+    pad_y = unit(0.3, "cm")) +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
+
+print(rouzgg2019)
+
+legrouz2019<-g_legend(rouzgg2019+theme(legend.position="left")+
+    guides(color = guide_colorbar(reverse = TRUE)))
+
+
+# write_sf(sf_lines_rouz, dsn=here("data","NewlyCreatedData","shapefiles"),
+#          driver="ESRI Shapefile",
+#          layer="tracks_rouzic", append=F, delete_layer=T)
+
+
+# tiff(here("outputs","Figure_maps.tif"),width=7000,height=4000,res=600,
+#      compression="lzw")
+# grid.arrange(bassgg,grassgg,rouzgg,ncol=3,widths=c(1,1.1)) 
+# 
+#     dev.off()     
+```
+
+# Bearing of trips over time
+
+```{r}
+#| echo: false
+#| include: true
+#| warning: false
+#| message: false
+
+library(geosphere)
+loc.rouz<-loc.clean.interp.rouz19
+loc.bass<-loc.clean.interp.bass19
+loc.grass<-loc.clean.interp.grass19
+#loc<-rbind(loc.rouz,loc.bass)
+
+loc.rouz$Week<-as.factor(as.numeric(format(loc.rouz$datetime,
+                                               format="%W")))
+
+
+loc.bass$Week<-as.factor(as.numeric(format(loc.bass$datetime,
+                                               format="%W")))
+
+loc.grass$Week<-as.factor(as.numeric(format(loc.grass$datetime,
+                                               format="%W")))
+
+loc.rouz$Bearing<-0
+loc.bass$Bearing<-0
+loc.grass$Bearing<-0
+loc.rouz$Bearing<-(bearing(loc.rouz[,c("long","lat")],
+                                         colo_coord_rouzic[,c("long","lat")],
+                                         f=0))+180
+loc.bass$Bearing<-(bearing(loc.bass[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
+                                         f=0))+180
+loc.grass$Bearing<-(bearing(loc.grass[,c("long","lat")],                                                                   colo_coord_grassholm[,c("long","lat")],
+                                         f=0))+180
+
+mycol<-viridis(7)
+
+brk<-seq(0,360,30)
+g1<-ggplot(loc.bass, 
+           aes(x = Bearing, group=Week)) +
+  geom_histogram(aes(fill=Week), 
+                 color = "gray10",
+                 breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),
+                     limits=c(0,360)) +
+     scale_y_continuous(breaks=seq(0,2000,500))+
+  scale_fill_manual(values = mycol) +
+     labs(y="Nb of locations",
+          x="",
+          tag="d)")+
+  coord_polar(theta="x",
+              start = 0, 
+              direction = 1,
+              clip="on") +
+  theme_minimal() +
+  theme(# legend.position = "none",
+        plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
+     axis.ticks.y = element_line(),
+     axis.title.y = element_text(hjust=0.8))
+  
+  print(g1)  
+  
+ g2<-ggplot(loc.rouz, 
+            aes(x = Bearing,group=Week)) +
+  geom_histogram(aes(fill=Week),
+                 color = "gray10",
+                 breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),
+                     limits=c(0,360)) +
+   scale_y_continuous(breaks=seq(0,500,100),
+                      limits=c(0,495))+
+  scale_fill_manual(values = mako(3)) +
+  coord_polar(theta="x",
+              start = 0, 
+              direction = 1,
+              clip="on") +
+     labs(y="Nb of locations",
+          x="",
+          tag="f)")+
+  theme_minimal() +
+  theme(# legend.position = "none",
+          plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
+         axis.ticks.y = element_line(),
+         axis.title.y = element_text(hjust=0.8))
+  
+  print(g2)  
+  
+   g3<-ggplot(loc.grass, 
+              aes(x = Bearing,
+                  group=Week)) +
+  geom_histogram(aes(fill=Week), 
+                 color = "gray10",
+                 breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),
+                     limits=c(0,360)) +
+  scale_y_continuous(breaks=seq(0,500,100),
+                     limits=c(0,550))+
+  scale_fill_manual(values = magma(2,  begin=0.2,end=0.85)) +
+ coord_polar(theta="x",
+             start = 0, 
+             direction = 1,
+             clip="on") +
+    labs(y="Nb of locations",
+         x="",
+         tag="e)")+
+  theme_minimal() +
+  theme(# legend.position = "none",
+          plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
+         axis.ticks.y = element_line(),
+         axis.title.y = element_text(hjust=0.8))
+  
+  print(g3)  
+  
+  tiff(here("outputs","Figure_maps_bearing_3col_2019.tif"),width=5000,
+       height=5000,res=600,
+     compression="lzw")
+   grid.arrange(bassgg2019,legbass2019,g1,
+                grassgg2019,leggrass2019,g3,
+                rouzgg2019 ,legrouz2019,g2 ,
+                nrow=3, ncol=3, widths=c(1,0.5,1))
+
+  dev.off()
+```

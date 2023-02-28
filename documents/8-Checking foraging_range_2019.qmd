@@ -170,6 +170,9 @@ loc.clean.interp.rouz19<-interpol_pastecs(data=cleanLocs.rouz19,
                            time.int=reso,
                            colony=colo_coord_rouzic)
 
+save(loc.clean.interp.rouz19,
+     file=here("Data","NewlyCreatedData","loc_clean_interp_rouzic2019.RData"))
+
 trips_interp_rouz19<-trips_summary_ind(loc.clean.interp.rouz19,
                                        colony=colo_coord_rouzic)
 
@@ -366,6 +369,10 @@ loc.clean.interp.grass19<-interpol_pastecs(data=cleanLocs.grass19,
                            time.int=reso,
                            colony=colo_coord_grassholm)
 
+save(loc.clean.interp.grass19,
+     file=here("Data","NewlyCreatedData","loc_clean_interp_grassholm2019.RData"))
+
+
 trips_interp_grass19<-trips_summary_ind(loc.clean.interp.grass19,
                                        colony=colo_coord_grassholm)
 
@@ -559,6 +566,10 @@ loc.clean.interp.bass19<-interpol_pastecs(data=cleanLocs.bass19,
                            time.int=reso,
                            colony=colo_coord_bassrock)
 
+
+save(loc.clean.interp.bass19,
+     file=here("Data","NewlyCreatedData","loc_clean_interp_bassrock2019.RData"))
+
 trips_interp_bass19<-trips_summary_ind(loc.clean.interp.bass19,
                                        colony=colo_coord_bassrock)
 
@@ -600,12 +611,11 @@ print(gglocbas)
 # Combinning stats for 3 colonies
 
 ```{r}
-
 #| echo: false
 #| include: true
 #| warning: false
 #| message: false
-#Table summary
+
 
 trips<-trips_interp_rouz19 %>% 
     rbind(trips_interp_grass19,trips_interp_bass19)
