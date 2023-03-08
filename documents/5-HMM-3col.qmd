@@ -139,12 +139,12 @@ dat.prop.tot<-dat.prop %>%
 
 dat.id<-dat.prop.tot %>% 
     group_by(site,ID) %>% 
-     summarize(across(c("Act1","Act2","Act3"), na.rm=T)) %>% 
+     summarize(across(c("Act1","Act2","Act3"), list(mean=mean))) %>% 
     as.data.frame()
 
 sum.act<- dat.id %>% 
     group_by(site) %>% 
-    summarize(across(c("Act1","Act2","Act3"), 
+    summarize(across(c("Act1_mean","Act2_mean","Act3_mean"), 
                      list(mean=mean,
                           se=std.error))) %>% 
     mutate(across(where(is.numeric), ~ .* 100)) %>% 

@@ -309,8 +309,8 @@ leggrass2019<-g_legend(grassgg2019+theme(legend.position="left")+
 #     sf::st_set_crs(wgscrs) %>% 
 #     sf::st_transform(., projcrs)
 
-longmnr=274068.6
-longmxr=710488.9
+longmnr=240000
+longmxr=675500
 latmnr=5265093
 latmxr=5654109
 
@@ -375,7 +375,7 @@ rouzgg2019<-ggplot()+
           x="",
           y="") +
     annotate("text",
-             x=525000,
+             x=510000,
              y=5335000,
              size=3, 
              label="italic(Brittany)" ,
@@ -536,7 +536,8 @@ g1<-ggplot(loc.bass,
   
   tiff(here("outputs","Figure_maps_bearing_3col_2019.tif"),width=5000,
        height=5000,res=600,
-     compression="lzw")
+     compression="lzw",
+     type="cairo")
    grid.arrange(bassgg2019,legbass2019,g1,
                 grassgg2019,leggrass2019,g3,
                 rouzgg2019 ,legrouz2019,g2 ,

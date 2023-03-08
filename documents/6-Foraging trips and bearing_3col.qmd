@@ -1,11 +1,11 @@
 ---
-title: "Foraging trips and bearing"
+title: "Foraging trips and bearing 2022"
 author: "Aurore Ponchon"
 format: html
 editor: visual
 ---
 
-# Illustrating foraging trips
+# Illustrating foraging trips in 2022
 
 ```{r}
 #| echo: false
@@ -534,9 +534,10 @@ g1<-ggplot(loc.bass,
   
   print(g3)  
   
-  tiff(here("outputs","Figure_maps_bearing_3col1.tif"),width=5000,
+  tiff(here("outputs","Figure_maps_bearing_3col.tif"),width=5000,
        height=5000,res=600,
-     compression="lzw")
+     compression="lzw",
+     type="cairo")
    grid.arrange(bassgg,g1,legbass,
                 grassgg,g3,leggrass,
                 rouzgg ,g2 ,legrouz,
