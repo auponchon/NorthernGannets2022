@@ -33,11 +33,79 @@ load(here("Data","NewlyCreatedData","loc_clean_interp_bassrock2019.RData"))
 load(here("Data","NewlyCreatedData","loc_clean_interp_rouzic2019.RData"))
 load(here("Data","NewlyCreatedData","loc_clean_interp_grassholm2019.RData"))
 
-land<-readOGR(dsn=here("data","NewlyCreatedData","shapefiles"),
-              layer="euro_afri_map",
-              verbose=FALSE)
-proj4string(land)<-wgscrs
-land_proj<-spTransform(land, projcrs)
+#load world map
+land_world<-read_sf(here("data","NewlyCreatedData","shapefiles",
+                         "World_WGS84_Fine_Reso.shp")) %>% 
+   sf::st_set_crs(wgscrs) 
+
+#load crop of France/UK extent
+crop.france_uk<-read_sf(here("data","NewlyCreatedData","shapefiles",
+              "UK_France.shp")) %>% 
+              sf::st_set_crs(wgscrs) 
+
+#crop world              
+land<-st_crop(land_world,crop.france_uk) %>% 
+    st_transform(., projcrs)
+
+#define other gannet UK colonies
+coord_other_colo<-data.frame(long=c(-2.2995818,
+                                   -6.618046,
+                                   -2.22903930,
+                                   -0.168675,
+                                   -0.906675,
+                                   -2.06954166,
+                                   -1.6303694,
+                                   -3.070275,
+                                   -4.43333,
+                                   -4.506988,
+                                   -5.11605,
+                                   -6.1588305,
+                                   -8.547,
+                                   -10.510,
+                                   -1.018,
+                                   -4.705,
+                                   -6.056,
+                                   -2.24),
+                            lat=c(57.681856,
+                                  52.14131905,
+                                  49.72982792,
+                                  54.14735,
+                                  60.82065833,
+                                  60.131266,
+                                  59.532155,
+                                 59.3303694,
+                                 59.08333,
+                                 59.023955,
+                                 55.253027,
+                                 59.094255,
+                                 57.871,
+                                 51.782,
+                                 60.146,
+                                 54.665,
+                                 53.408,
+                                 49.704 ) ,
+                            name=c("Troup Head",
+                                   "Salt",
+                                   "Ortac",
+                                   "Bempton",
+                                   "Hermaness",
+                                   "Foula",
+                                   "Fair Isle",
+                                   "Noup Head",
+                                   "Sule Skerry",
+                                   "Sule Stack",
+                                   "Ailsa Craig",
+                                   "Sula Sgeir",
+                                   "St Kilda",
+                                   "Little Skellig",
+                                   "Noss",
+                                   "Scar Rocks",
+                                   "Ireland Eye",
+                                   "Les Etacs")) %>%     
+                 sf::st_as_sf(., coords = c("long","lat")) %>% 
+                 sf::st_set_crs(wgscrs) %>% 
+                 sf::st_transform(., projcrs)
+
 
 
 ```
@@ -63,7 +131,7 @@ br<-data.frame(long=c(-5,9),
     sf::st_set_crs(wgscrs) %>%
     sf::st_transform(., projcrs)
 
-longmnbr=310000
+longmnbr=300000
 longmxbr=1180000
 latmnbr=5874142
 latmxbr=6647326
@@ -72,12 +140,6 @@ coord_bassrock<-colo_coord_bassrock %>%
      sf::st_as_sf(., coords = c("long","lat")) %>% 
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs)
-
-coord_trouphead<-data.frame(long=-2.2995818,
-                            lat=57.681856) %>% 
-                 sf::st_as_sf(., coords = c("long","lat")) %>% 
-                 sf::st_set_crs(wgscrs) %>% 
-                 sf::st_transform(., projcrs)
 
 land_proj_bass<-land %>% 
     st_as_sf(.) %>% 
@@ -118,11 +180,11 @@ bassgg2019<-ggplot()+
              colour="black",
              fill="yellow", 
              size=4) + 
-    geom_sf(data =coord_trouphead,
+    geom_sf(data =coord_other_colo,
             shape=21, 
              colour="black",
              fill="orange", 
-             size=3) +
+             size=2) +
      coord_sf(xlim = c(longmnbr,longmxbr),
               ylim=c(latmnbr, latmxbr),
               expand = FALSE) +
@@ -184,8 +246,8 @@ br<-data.frame(long=c(-9,-4),
     sf::st_set_crs(wgscrs) %>%
     sf::st_transform(., projcrs)
 
-longmnr=15000
-longmxr=630000
+longmnr=-30000
+longmxr=580000
 latmnr=5444800
 latmxr=5984090
 
@@ -194,11 +256,6 @@ coord_grassholm<-colo_coord_grassholm %>%
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs)
 
-coord_salt<-data.frame(long=-6.618046,
-                       lat=52.14131905) %>%
-    sf::st_as_sf(., coords = c("long","lat")) %>%
-    sf::st_set_crs(wgscrs) %>%
-    sf::st_transform(., projcrs)
 
 land_proj_grass<-land %>% 
     st_as_sf(.) %>% 
@@ -240,11 +297,11 @@ grassgg2019<-ggplot()+
              colour="black",
              fill="yellow", 
              size=4) + 
-    geom_sf(data = coord_salt,
+    geom_sf(data = coord_other_colo,
              shape=21, 
              colour="black",
              fill="orange",
-             size=3) +
+             size=2) +
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
@@ -258,7 +315,7 @@ grassgg2019<-ggplot()+
              label="italic(Ireland)", 
              parse=TRUE) +
         annotate("text",
-                 x=550000,
+                 x=500000,
                  y=5820000,
                  size=3, 
                  label="italic(Wales)" ,
@@ -276,7 +333,7 @@ grassgg2019<-ggplot()+
     annotation_north_arrow(location = "br", 
                            which_north = "true",
     style = ggspatial::north_arrow_nautical(), 
-    pad_y = unit(0.3, "cm")) +
+    pad_y = unit(0.2, "cm")) +
     theme_bw() +
     theme(legend.position = "none",
           plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
@@ -319,13 +376,6 @@ coord_rouzic<-colo_coord_rouzic %>%
     sf::st_set_crs(wgscrs) %>% 
     sf::st_transform(., projcrs)
 
-
-coord_ortac<-data.frame(long=-2.22903930,
-                        lat=49.72982792)%>% 
-     sf::st_as_sf(., coords = c("long","lat")) %>% 
-    sf::st_set_crs(wgscrs) %>% 
-    sf::st_transform(., projcrs)
-
 land_proj_rouz<-land %>% 
     st_as_sf(.) %>% 
     # st_crop(., c(xmin = longmnr, ymin = latmnr, 
@@ -363,11 +413,11 @@ rouzgg2019<-ggplot()+
              colour="black",
              fill="yellow",
              size=4) + 
-    geom_sf(data = coord_ortac,
+    geom_sf(data = coord_other_colo,
              shape=21, 
              colour="black",
              fill="orange",
-             size=3) +
+             size=2) +
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
