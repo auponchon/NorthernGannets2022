@@ -107,6 +107,9 @@ grid.arrange(distraw,diffraw, ncol=2,
              top = textGrob("Raw data Rouzic 2019",gp=gpar(fontsize=16,font=3)))
 
 
+save(rawLoc.rouzic2019,file=here::here("data","NewlyCreatedData",
+                                       "rawLocRouric2019.RData"))
+
 #summarize all trips and periods on land by individuals
 raw_trips_rouz19<-trips_summary_ind(rawLoc.rouzic2019,colony=colo_coord_rouzic)
 raw_land_rouz19<-land_summary_ind(rawLoc.rouzic2019,colony=colo_coord_rouzic)
@@ -303,6 +306,8 @@ diffraw<-ggplot(rawLoc.grass2019,aes(x=datetime,y=difftimemin),group=id)+
 grid.arrange(distraw,diffraw, ncol=2,
              top = textGrob("Raw data Grassholm 2019",gp=gpar(fontsize=16,font=3)))
 
+save(rawLoc.grass2019,file=here::here("data","NewlyCreatedData",
+                                       "rawLocGrassholm2019.RData"))
 
 #summarize all trips and periods on land by individuals
 raw_trips_grass19<-trips_summary_ind(rawLoc.grass2019,colony=colo_coord_grassholm)
@@ -497,6 +502,9 @@ diffraw<-ggplot(rawLoc.bass2019,aes(x=datetime,y=difftimemin),group=id)+
 
 grid.arrange(distraw,diffraw, ncol=2,
              top = textGrob("Raw data Bass Rock 2019",gp=gpar(fontsize=16,font=3)))
+
+save(rawLoc.bass2019,file=here::here("data","NewlyCreatedData",
+                                       "rawLocBassrock2019.RData"))
 
 
 #summarize all trips and periods on land by individuals
