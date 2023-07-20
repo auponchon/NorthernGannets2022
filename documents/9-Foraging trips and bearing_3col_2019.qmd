@@ -194,9 +194,9 @@ bassgg2019<-ggplot()+
              size=2.5, 
              label="italic(Scotland)" , 
              parse=TRUE) +
-     labs(tag="a)",
-          x="",
-          y="") +
+     labs(x="",
+          y="",
+          title="2019") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass2019$Date))),
                             breaks = seq.Date(min(sf_lines_bass2019$Date),
                                               max(sf_lines_bass2019$Date),
@@ -213,7 +213,10 @@ bassgg2019<-ggplot()+
     theme_bw() +
     theme(legend.position = "none",
           plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"),
-          axis.text = element_text(size=10))
+          axis.text = element_text(size=10),
+          plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
 
 print(bassgg2019)
 
@@ -305,8 +308,7 @@ grassgg2019<-ggplot()+
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
-    labs(tag="b)",
-          x="",
+    labs(x="",
           y="") +
     annotate("text",
              x=190000,
@@ -421,8 +423,7 @@ rouzgg2019<-ggplot()+
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
-    labs(tag="c)",
-          x="",
+    labs( x="",
           y="") +
     annotate("text",
              x=510000,
@@ -468,7 +469,18 @@ legrouz2019<-g_legend(rouzgg2019+theme(legend.position="left")+
 #      compression="lzw")
 # grid.arrange(bassgg,grassgg,rouzgg,ncol=3,widths=c(1,1.1)) 
 # 
-#     dev.off()     
+#     dev.off()   
+
+  tiff(here("outputs","Figures finales","Figure_maps_2022_2019.tif"),width=5500,
+       height=5000,res=600,
+     compression="lzw",
+     type="cairo")
+   grid.arrange(bassgg22,legbass22,bassgg2019,legbass2019,
+                grassgg22,leggrass22,grassgg2019,leggrass2019,
+                rouzgg22 ,legrouz22,rouzgg2019 ,legrouz2019,
+                nrow=3, ncol=4, widths=c(1,0.3,1,0.3))
+
+  dev.off()
 ```
 
 # Bearing of trips over time
@@ -480,36 +492,36 @@ legrouz2019<-g_legend(rouzgg2019+theme(legend.position="left")+
 #| message: false
 
 library(geosphere)
-loc.rouz<-loc.clean.interp.rouz19
-loc.bass<-loc.clean.interp.bass19
-loc.grass<-loc.clean.interp.grass19
+loc.rouz19<-loc.clean.interp.rouz19
+loc.bass19<-loc.clean.interp.bass19
+loc.grass19<-loc.clean.interp.grass19
 #loc<-rbind(loc.rouz,loc.bass)
 
-loc.rouz$Week<-as.factor(as.numeric(format(loc.rouz$datetime,
+loc.rouz19$Week<-as.factor(as.numeric(format(loc.rouz19$datetime,
                                                format="%W")))
 
 
-loc.bass$Week<-as.factor(as.numeric(format(loc.bass$datetime,
+loc.bass19$Week<-as.factor(as.numeric(format(loc.bass19$datetime,
                                                format="%W")))
 
-loc.grass$Week<-as.factor(as.numeric(format(loc.grass$datetime,
+loc.grass19$Week<-as.factor(as.numeric(format(loc.grass19$datetime,
                                                format="%W")))
 
-loc.rouz$Bearing<-0
-loc.bass$Bearing<-0
-loc.grass$Bearing<-0
-loc.rouz$Bearing<-(bearing(loc.rouz[,c("long","lat")],
+loc.rouz19$Bearing<-0
+loc.bass19$Bearing<-0
+loc.grass19$Bearing<-0
+loc.rouz19$Bearing<-(bearing(loc.rouz19[,c("long","lat")],
                                          colo_coord_rouzic[,c("long","lat")],
                                          f=0))+180
-loc.bass$Bearing<-(bearing(loc.bass[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
+loc.bass19$Bearing<-(bearing(loc.bass19[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
                                          f=0))+180
-loc.grass$Bearing<-(bearing(loc.grass[,c("long","lat")],                                                                   colo_coord_grassholm[,c("long","lat")],
+loc.grass19$Bearing<-(bearing(loc.grass19[,c("long","lat")],                                                                   colo_coord_grassholm[,c("long","lat")],
                                          f=0))+180
 
 mycol<-viridis(7)
 
 brk<-seq(0,360,30)
-g1<-ggplot(loc.bass, 
+bearbass19<-ggplot(loc.bass19, 
            aes(x = Bearing, group=Week)) +
   geom_histogram(aes(fill=Week), 
                  color = "gray10",
@@ -520,7 +532,7 @@ g1<-ggplot(loc.bass,
   scale_fill_manual(values = mycol) +
      labs(y="Nb of locations",
           x="",
-          tag="d)")+
+          title="2019 - Bassrock")+
   coord_polar(theta="x",
               start = 0, 
               direction = 1,
@@ -529,11 +541,14 @@ g1<-ggplot(loc.bass,
   theme(# legend.position = "none",
         plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
      axis.ticks.y = element_line(),
-     axis.title.y = element_text(hjust=0.8))
+     axis.title.y = element_text(hjust=0.8),
+     plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
   
-  print(g1)  
+  print(bearbass19)  
   
- g2<-ggplot(loc.rouz, 
+bearrouz19<-ggplot(loc.rouz19, 
             aes(x = Bearing,group=Week)) +
   geom_histogram(aes(fill=Week),
                  color = "gray10",
@@ -549,16 +564,19 @@ g1<-ggplot(loc.bass,
               clip="on") +
      labs(y="Nb of locations",
           x="",
-          tag="f)")+
+          title="2019 - Rouzic")+
   theme_minimal() +
   theme(# legend.position = "none",
           plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
          axis.ticks.y = element_line(),
-         axis.title.y = element_text(hjust=0.8))
+         axis.title.y = element_text(hjust=0.8),
+         plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
   
-  print(g2)  
+  print(bearrouz19)  
   
-   g3<-ggplot(loc.grass, 
+  beargrass19<-ggplot(loc.grass19, 
               aes(x = Bearing,
                   group=Week)) +
   geom_histogram(aes(fill=Week), 
@@ -575,23 +593,39 @@ g1<-ggplot(loc.bass,
              clip="on") +
     labs(y="Nb of locations",
          x="",
-         tag="e)")+
+         title = "2019 - Grassholm")+
   theme_minimal() +
   theme(# legend.position = "none",
           plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
          axis.ticks.y = element_line(),
-         axis.title.y = element_text(hjust=0.8))
+         axis.title.y = element_text(hjust=0.8),
+         plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
   
-  print(g3)  
+  print(beargrass19)  
   
-  tiff(here("outputs","Figure_maps_bearing_3col_2019.tif"),width=5000,
+  # tiff(here("outputs","Figure_maps_bearing_3col_2019.tif"),width=5000,
+  #      height=5000,res=600,
+  #    compression="lzw",
+  #    type="cairo")
+  #  grid.arrange(bassgg2019,legbass2019,g1,
+  #               grassgg2019,leggrass2019,g3,
+  #               rouzgg2019 ,legrouz2019,g2 ,
+  #               nrow=3, ncol=3, widths=c(1,0.5,1))
+  # 
+  # dev.off()
+  
+  tiff(here("outputs","Figures finales","Figure_bearing_2022_2019.tif"),width=4500,
        height=5000,res=600,
      compression="lzw",
      type="cairo")
-   grid.arrange(bassgg2019,legbass2019,g1,
-                grassgg2019,leggrass2019,g3,
-                rouzgg2019 ,legrouz2019,g2 ,
-                nrow=3, ncol=3, widths=c(1,0.5,1))
+   grid.arrange(bearbass22,bearbass19,
+                beargrass22,beargrass19,
+                bearrouz22 ,bearrouz19,
+                nrow=3, ncol=2)
 
   dev.off()
+
+
 ```

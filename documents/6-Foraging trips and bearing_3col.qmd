@@ -163,7 +163,7 @@ sf_lines_bass <- sf_locs_bass %>%
     arrange(Date)
 
 
-bassgg<-ggplot()+
+bassgg22<-ggplot()+
      geom_sf(data=land,
              fill="grey90",
              size=0.2) +   
@@ -188,9 +188,9 @@ bassgg<-ggplot()+
              size=2.5, 
              label="italic(Scotland)" , 
              parse=TRUE) +
-     labs(tag="a)",
-          x="",
-          y="") +
+     labs(x="",
+          y="",
+          title="2022") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass$Date))),
                             breaks = seq.Date(min(sf_lines_bass$Date),
                                               max(sf_lines_bass$Date),
@@ -207,11 +207,14 @@ bassgg<-ggplot()+
     theme_bw() +
     theme(legend.position = "none",
           plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"),
-          axis.text = element_text(size=10))
+          axis.text = element_text(size=10),
+          plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
 
-print(bassgg)
+print(bassgg22)
 
-legbass<-g_legend(bassgg+theme(legend.position="left")+
+legbass22<-g_legend(bassgg22+theme(legend.position="left")+
     guides(color = guide_colorbar(reverse = TRUE)))
 
 # write_sf(sf_lines_bass, dsn=here("data","NewlyCreatedData","shapefiles"),
@@ -273,7 +276,7 @@ sf_lines_grass <- sf_locs_grass %>%
     arrange(Date)
 
 
-grassgg<-ggplot()+
+grassgg22<-ggplot()+
      geom_sf(data = sf_lines_grass, 
              mapping=aes(colour=Date),
              alpha=0.7) +
@@ -293,8 +296,7 @@ grassgg<-ggplot()+
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
-    labs(tag="b)",
-          x="",
+    labs(x="",
           y="") +
     annotate("text",
              x=190000,
@@ -327,9 +329,9 @@ grassgg<-ggplot()+
     theme(legend.position = "none",
           plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
 
-print(grassgg)
+print(grassgg22)
 
-leggrass<-g_legend(grassgg+theme(legend.position="left")+
+leggrass22<-g_legend(grassgg22+theme(legend.position="left")+
     guides(color = guide_colorbar(reverse = TRUE)))
 
 ```
@@ -387,7 +389,7 @@ sf_lines_rouz <- sf_locs_rouz %>%
                       format="%d/%m"))  %>% 
     arrange(Date)
 
-rouzgg<-ggplot()+
+rouzgg22<-ggplot()+
      geom_sf(data = sf_lines_rouz, mapping=aes(colour=Date),alpha=0.7) +
      geom_sf(data=land,
              fill="grey90",
@@ -405,8 +407,7 @@ rouzgg<-ggplot()+
      coord_sf(xlim = c(longmnr,longmxr), 
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
-    labs(tag="c)",
-          x="",
+    labs(x="",
           y="") +
     annotate("text",
              x=525000,
@@ -437,9 +438,9 @@ rouzgg<-ggplot()+
     theme(legend.position = "none",
           plot.margin = unit(c(0.5, 0.5, 0, 0), "lines"))
 
-print(rouzgg)
+print(rouzgg22)
 
-legrouz<-g_legend(rouzgg+theme(legend.position="left")+
+legrouz22<-g_legend(rouzgg22+theme(legend.position="left")+
     guides(color = guide_colorbar(reverse = TRUE)))
 
 
@@ -464,36 +465,36 @@ legrouz<-g_legend(rouzgg+theme(legend.position="left")+
 #| message: false
 
 library(geosphere)
-loc.rouz<-loc.interp.rouzic
-loc.bass<-loc.interp.bassrock
-loc.grass<-loc.interp.grassholm
+loc.rouz22<-loc.interp.rouzic
+loc.bass22<-loc.interp.bassrock
+loc.grass22<-loc.interp.grassholm
 #loc<-rbind(loc.rouz,loc.bass)
 
-loc.rouz$Week<-as.factor(as.numeric(format(loc.rouz$datetime,
-                                               format="%W"))-31)
+loc.rouz22$Week<-as.factor(as.numeric(format(loc.rouz22$datetime,
+                                               format="%W")))
 
 
-loc.bass$Week<-as.factor(as.numeric(format(loc.bass$datetime,
-                                               format="%W"))-31)
+loc.bass22$Week<-as.factor(as.numeric(format(loc.bass22$datetime,
+                                               format="%W")))
 
-loc.grass$Week<-as.factor(as.numeric(format(loc.grass$datetime,
-                                               format="%W"))-31)
+loc.grass22$Week<-as.factor(as.numeric(format(loc.grass22$datetime,
+                                               format="%W")))
 
-loc.rouz$Bearing<-0
-loc.bass$Bearing<-0
-loc.grass$Bearing<-0
-loc.rouz$Bearing<-(bearing(loc.rouz[,c("long","lat")],
+loc.rouz22$Bearing<-0
+loc.bass22$Bearing<-0
+loc.grass22$Bearing<-0
+loc.rouz22$Bearing<-(bearing(loc.rouz22[,c("long","lat")],
                                          colo_coord_rouzic[,c("long","lat")],
                                          f=0))+180
-loc.bass$Bearing<-(bearing(loc.bass[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
+loc.bass22$Bearing<-(bearing(loc.bass22[,c("long","lat")],                                                                   colo_coord_bassrock[,c("long","lat")],
                                          f=0))+180
-loc.grass$Bearing<-(bearing(loc.grass[,c("long","lat")],                                                                   colo_coord_grassholm[,c("long","lat")],
+loc.grass22$Bearing<-(bearing(loc.grass22[,c("long","lat")],                                                                   colo_coord_grassholm[,c("long","lat")],
                                          f=0))+180
 
 mycol<-viridis(10)
 
 brk<-seq(0,360,30)
-g1<-ggplot(loc.bass, 
+bearbass22<-ggplot(loc.bass22, 
            aes(x = Bearing, group=Week)) +
   geom_histogram(aes(fill=Week), 
                  color = "gray10",
@@ -504,20 +505,23 @@ g1<-ggplot(loc.bass,
   scale_fill_manual(values = mycol) +
      labs(y="Nb of locations",
           x="",
-          tag="d)")+
+          title="2022 - Bassrock")+
   coord_polar(theta="x",
               start = 0, 
               direction = 1,
               clip="on") +
   theme_minimal() +
-  theme( legend.position = "none",
+  theme(# legend.position = "none",
         plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
      axis.ticks.y = element_line(),
-     axis.title.y = element_text(hjust=0.8))
+     axis.title.y = element_text(hjust=0.8),
+     plot.title = element_text(hjust = 0.5,
+                               face = "bold",
+                               size=12))
   
-  print(g1)  
+  print(bearbass22)  
   
- g2<-ggplot(loc.rouz, 
+bearrouz22<-ggplot(loc.rouz22, 
             aes(x = Bearing,group=Week)) +
   geom_histogram(aes(fill=Week),
                  color = "gray10",
@@ -533,16 +537,19 @@ g1<-ggplot(loc.bass,
               clip="on") +
      labs(y="Nb of locations",
           x="",
-          tag="f)")+
+          title="2022 - Rouzic")+
   theme_minimal() +
-  theme( legend.position = "none",
+  theme( #legend.position = "none",
           plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
          axis.ticks.y = element_line(),
-         axis.title.y = element_text(hjust=0.8))
+         axis.title.y = element_text(hjust=0.8),
+         plot.title = element_text(hjust = 0.5,
+                               face = "bold",
+                               size=12))
   
-  print(g2)  
+  print(bearrouz22)  
   
-   g3<-ggplot(loc.grass, 
+ beargrass22<-ggplot(loc.grass22, 
               aes(x = Bearing,
                   group=Week)) +
   geom_histogram(aes(fill=Week), 
@@ -559,23 +566,26 @@ g1<-ggplot(loc.bass,
              clip="on") +
     labs(y="Nb of locations",
          x="",
-         tag="e)")+
+         title="2022 - Grassholm")+
   theme_minimal() +
-  theme( legend.position = "none",
+  theme( #legend.position = "none",
           plot.margin = unit(c(0.5, 0, 0, 0), "lines"),
          axis.ticks.y = element_line(),
-         axis.title.y = element_text(hjust=0.8))
+         axis.title.y = element_text(hjust=0.8),
+         plot.title=element_text(hjust=0.5,
+                                  face = "bold",
+                                   size=12))
   
-  print(g3)  
+  print(beargrass22)  
   
-  tiff(here("outputs","Figure_maps_bearing_3col_revised.tif"),width=5000,
-       height=5000,res=600,
-     compression="lzw",
-     type="cairo")
-   grid.arrange(bassgg,g1,legbass,
-                grassgg,g3,leggrass,
-                rouzgg ,g2 ,legrouz,
-                nrow=3, ncol=3, widths=c(1,1,0.5))
-
-  dev.off()
+  # tiff(here("outputs","Figure_maps_bearing_3col_revised.tif"),width=5000,
+  #      height=5000,res=600,
+  #    compression="lzw",
+  #    type="cairo")
+  #  grid.arrange(bassgg,g1,legbass,
+  #               grassgg,g3,leggrass,
+  #               rouzgg ,g2 ,legrouz,
+  #               nrow=3, ncol=3, widths=c(1,1,0.5))
+  # 
+  # dev.off()
 ```
