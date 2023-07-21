@@ -196,6 +196,7 @@ bassgg2019<-ggplot()+
              parse=TRUE) +
      labs(x="",
           y="",
+          tag="",
           title="2019") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass2019$Date))),
                             breaks = seq.Date(min(sf_lines_bass2019$Date),
@@ -309,7 +310,8 @@ grassgg2019<-ggplot()+
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
     labs(x="",
-          y="") +
+          y="",
+          tag="") +
     annotate("text",
              x=190000,
              y=5900000,
@@ -424,7 +426,8 @@ rouzgg2019<-ggplot()+
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
     labs( x="",
-          y="") +
+          y="",
+          tag="") +
     annotate("text",
              x=510000,
              y=5335000,
@@ -532,6 +535,7 @@ bearbass19<-ggplot(loc.bass19,
   scale_fill_manual(values = mycol) +
      labs(y="Nb of locations",
           x="",
+          tag="",
           title="2019 - Bassrock")+
   coord_polar(theta="x",
               start = 0, 
@@ -564,6 +568,7 @@ bearrouz19<-ggplot(loc.rouz19,
               clip="on") +
      labs(y="Nb of locations",
           x="",
+          tag="",
           title="2019 - Rouzic")+
   theme_minimal() +
   theme(# legend.position = "none",
@@ -593,6 +598,7 @@ bearrouz19<-ggplot(loc.rouz19,
              clip="on") +
     labs(y="Nb of locations",
          x="",
+         tag="",
          title = "2019 - Grassholm")+
   theme_minimal() +
   theme(# legend.position = "none",

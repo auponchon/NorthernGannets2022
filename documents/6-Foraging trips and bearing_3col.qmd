@@ -190,6 +190,7 @@ bassgg22<-ggplot()+
              parse=TRUE) +
      labs(x="",
           y="",
+          tag="a)",
           title="2022") +
      scale_colour_gradientn(colours=viridis(length(unique(sf_lines_bass$Date))),
                             breaks = seq.Date(min(sf_lines_bass$Date),
@@ -297,7 +298,8 @@ grassgg22<-ggplot()+
               ylim=c(latmnr, latmxr),  
               expand = FALSE) +
     labs(x="",
-          y="") +
+          y="",
+           tag="b)") +
     annotate("text",
              x=190000,
              y=5900000,
@@ -408,7 +410,8 @@ rouzgg22<-ggplot()+
               ylim=c(latmnr, latmxr), 
               expand = FALSE) +
     labs(x="",
-          y="") +
+          y="",
+           tag="c)") +
     annotate("text",
              x=525000,
              y=5335000,
@@ -505,6 +508,7 @@ bearbass22<-ggplot(loc.bass22,
   scale_fill_manual(values = mycol) +
      labs(y="Nb of locations",
           x="",
+          tag="a)",
           title="2022 - Bassrock")+
   coord_polar(theta="x",
               start = 0, 
@@ -537,6 +541,7 @@ bearrouz22<-ggplot(loc.rouz22,
               clip="on") +
      labs(y="Nb of locations",
           x="",
+          tag="c)",
           title="2022 - Rouzic")+
   theme_minimal() +
   theme( #legend.position = "none",
@@ -566,6 +571,7 @@ bearrouz22<-ggplot(loc.rouz22,
              clip="on") +
     labs(y="Nb of locations",
          x="",
+         tag="b)",
          title="2022 - Grassholm")+
   theme_minimal() +
   theme( #legend.position = "none",

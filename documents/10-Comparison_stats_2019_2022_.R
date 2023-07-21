@@ -621,8 +621,8 @@ mylegend<-g_legend(landdur)
 
 
 tiff(here::here("outputs","Figures finales","lmm_year_2022_2019.tiff"),
-     width=7000,
-     height=4000,
+     width=6000,
+     height=3500,
      res=600,
      compression="lzw")
 grid.arrange(arrangeGrob(dist,
