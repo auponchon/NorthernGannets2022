@@ -438,7 +438,8 @@ dist<-ggplot(emm,aes(x=site,y=exp(emmean)), group=Year ) +
   labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
   scale_colour_manual(values=mycol) +
   theme_light() +
-  theme(legend.position="none") 
+  theme(legend.position="none",
+        panel.grid.minor = element_blank()) 
 
 print(dist)
 
@@ -499,7 +500,8 @@ dur<-ggplot(emm,aes(x=site,y=exp(emmean)), group=Year ) +
   labs(y="Trip duration (h)",tag="b)",x="") +
   scale_colour_manual(values=mycol) +
   theme_light() +
-  theme(legend.position="none") 
+  theme(legend.position="none",
+        panel.grid.minor = element_blank()) 
 
 print(dur)
 
@@ -562,7 +564,8 @@ totdist<-ggplot(emm,aes(x=site,y=exp(emmean)), group=Year ) +
        x="") +
   scale_colour_manual(values=mycol) +
   theme_light() +
-   theme(legend.position="none") 
+   theme(legend.position="none",,
+         panel.grid.minor = element_blank()) 
 
 print(totdist)
 
@@ -576,6 +579,10 @@ glmm.land.lme.bass<-lme(log(LandDurh) ~ Year,
                         random=~1 | id , 
                         data=lands.bass)
 
+
+# glmm.land.lme.grass<-lme(log(LandDurh) ~ Year, 
+#                         random=~1 | id , 
+#                         data=lands.grass)
 
 grouz <- ref_grid(glmm.land.lme.rouz, 
                   cov.keep= c('Year'))
@@ -614,7 +621,8 @@ landdur<-ggplot(emm,aes(x=site,y=exp(emmean)), group=Year ) +
        x="") +
   scale_colour_manual(values=mycol) +
   theme_light() +
-  guides(shape=guide_legend(title="Year")) 
+  guides(shape=guide_legend(title="Year")) +
+theme(panel.grid.minor = element_blank())
 print(landdur)
 
 mylegend<-g_legend(landdur)

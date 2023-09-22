@@ -321,7 +321,8 @@ geom_ribbon(data= data.frame(emm),
  scale_colour_manual(values=mycol) +
  scale_fill_manual(values=mycol)  +
      theme_light()+
-    theme(legend.position="none") 
+    theme(legend.position="none",
+          panel.grid.minor = element_blank()) 
 print(distgg) 
 ```
 
@@ -451,7 +452,7 @@ geom_ribbon(data= data.frame(emm),
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
     theme_light()+
-    theme(legend.position="none") 
+    theme(legend.position="none",panel.grid.minor = element_blank()) 
     
 print(durgg)
 
@@ -583,7 +584,8 @@ geom_ribbon(data= emm,
   scale_colour_manual(values=mycol) +
     scale_fill_manual(values=mycol)  +
     theme_light()+
-    theme(legend.position="none") 
+    theme(legend.position="none",
+          panel.grid.minor = element_blank()) 
     
 print(pathgg)
 
@@ -727,14 +729,15 @@ geom_ribbon(data= data.frame(emm),
   
   scale_colour_manual(values=mycol,name="Colony") +
     scale_fill_manual(values=mycol,name="Colony")  +
-     theme_light()
+     theme_light()+
+    theme(panel.grid.minor = element_blank())
     
     
 print(durlandgg)
 
 mylegend<-g_legend(durlandgg)
 
-tiff(here("outputs","Figure_LMM_trips_3col.tif"),
+tiff(here("outputs","Figures finales","Figure_LMM_trips_3col_update.tif"),
      width=7000,
      height=4000,
      res=600,
